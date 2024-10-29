@@ -1,0 +1,10 @@
+name: "chain-connectors-dev"
+
+services:
+  redis:
+    container_name: "redis-dev"
+    network_mode: bridge
+    image: docker.io/redis:7.2.1-alpine3.18
+    command: ["--port", "6379", "--loglevel", "debug"]
+    ports:
+      - "6379:6379"
