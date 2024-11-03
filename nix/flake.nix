@@ -12,10 +12,9 @@
       in {
         devShells.default = pkgs.mkShell {
           packages = [
-            pkgs.nodejs_22
+            pkgs.grpc-tools
             pkgs.go_1_23
-            pkgs.redis # v
-            pkgs.deno # v2.0.2
+            pkgs.redis
           ];
         };
       }
