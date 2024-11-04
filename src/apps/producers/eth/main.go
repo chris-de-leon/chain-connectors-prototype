@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
-	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/common"
 	"github.com/chris-de-leon/chain-connectors/src/libs/producers/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/sync/errgroup"
@@ -16,25 +15,31 @@ import (
 )
 
 func main() {
+	serverUrl := common.NewEnvVar("SERVER_URL").AssertExists().AssertNonEmpty()
+	wssUrl := common.NewEnvVar("WSS_URL").AssertExists().AssertNonEmpty()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	wss, err := ethclient.Dial(os.Getenv("WSS_URL"))
+	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", serverUrl)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	} else {
+		defer lis.Close()
 	}
 
-	lis, err := net.Listen("tcp", os.Getenv("SERVER_URL"))
+	wss, err := ethclient.Dial(wssUrl)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	} else {
+		defer wss.Close()
 	}
 
-	lgr := log.New(os.Stdout, fmt.Sprintf("[%s] ", "eth-block-producer"), log.LstdFlags)
+	lgr := eth.NewBlockStreamerLogger()
 	stm := eth.NewBlockStreamer(wss, lgr)
 	prd := eth.NewBlockProducer(stm)
-	srv := grpc.NewServer()
+	srv := prd.RegisterToServer(grpc.NewServer())
 
-	prd.RegisterToServer(srv)
 	eg := new(errgroup.Group)
 	eg.Go(func() error {
 		return stm.Subscribe(ctx)
@@ -43,9 +48,10 @@ func main() {
 		return srv.Serve(lis)
 	})
 
+	lgr.Printf("Listening on %s", serverUrl)
 	<-ctx.Done()
 	srv.GracefulStop()
 	if err := eg.Wait(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

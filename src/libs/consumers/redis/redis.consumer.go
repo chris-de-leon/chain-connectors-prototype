@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
 	"github.com/redis/go-redis/v9"
@@ -24,6 +25,10 @@ func NewBlockConsumer(name string, client *redis.Client, logger *log.Logger) *Bl
 		logger:    logger,
 		client:    client,
 	}
+}
+
+func NewBlockConsumerLogger(name string) *log.Logger {
+	return log.New(os.Stdout, fmt.Sprintf("[%s-consumer] ", name), log.LstdFlags)
 }
 
 func (consumer *BlockConsumer) Cursor(ctx context.Context) (*string, error) {

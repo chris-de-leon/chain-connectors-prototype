@@ -23,8 +23,9 @@ func NewBlockProducer(stream *BlockStreamer) BlockProducer {
 	}
 }
 
-func (producer BlockProducer) RegisterToServer(srv *grpc.Server) {
+func (producer BlockProducer) RegisterToServer(srv *grpc.Server) *grpc.Server {
 	proto.RegisterBlockProducerServer(srv, producer)
+	return srv
 }
 
 func (producer BlockProducer) Blocks(initBlock *proto.InitBlock, stream grpc.ServerStreamingServer[proto.Block]) error {
@@ -36,7 +37,7 @@ func (producer BlockProducer) Blocks(initBlock *proto.InitBlock, stream grpc.Ser
 	}
 
 	for {
-		block, err := producer.waitForNextBlock(ctx, cursor)
+		block, err := producer.stream.WaitForNextBlock(ctx, cursor)
 		if err != nil {
 			return err
 		}
@@ -54,7 +55,7 @@ func (producer BlockProducer) Blocks(initBlock *proto.InitBlock, stream grpc.Ser
 			return err
 		}
 
-		cursor = (&big.Int{}).Add(cursor, (&big.Int{}).SetInt64(1))
+		cursor = new(big.Int).Add(cursor, big.NewInt(1))
 	}
 }
 
@@ -70,11 +71,11 @@ func (producer BlockProducer) initCursor(ctx context.Context, initBlock *proto.I
 		return latestBlock.Number(), nil
 	}
 
-	cursor, ok := (&big.Int{}).SetString(initBlock.GetHeight(), 10)
+	cursor, ok := new(big.Int).SetString(initBlock.GetHeight(), 10)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert string '%s' to big int", initBlock.GetHeight())
 	}
-	if cursor.Cmp((&big.Int{}).SetInt64(0)) == -1 {
+	if cursor.Cmp(big.NewInt(0)) == -1 {
 		return nil, errors.New("invalid start block height (must be >= 0)")
 	}
 	if cursor.Cmp(latestBlock.Number()) == 1 {
@@ -82,28 +83,6 @@ func (producer BlockProducer) initCursor(ctx context.Context, initBlock *proto.I
 	}
 
 	return cursor, nil
-}
-
-func (producer BlockProducer) waitForNextBlock(ctx context.Context, cursor *big.Int) (*ethtypes.Block, error) {
-	nextCursor := (&big.Int{}).Add(cursor, (&big.Int{}).SetInt64(1))
-
-	currNum, err := producer.stream.client.BlockNumber(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if nextCursor.Cmp((&big.Int{}).SetUint64(currNum)) == 1 {
-		producer.stream.WaitForNextBlockHeader(ctx)
-	}
-
-	block, err := producer.stream.client.BlockByNumber(ctx, nextCursor)
-	if err != nil {
-		return nil, err
-	}
-	if block == nil {
-		return nil, fmt.Errorf("unexpectedly received empty block for height '%d'", nextCursor)
-	}
-
-	return block, nil
 }
 
 func (producer BlockProducer) stringifyBlock(block *ethtypes.Block) ([]byte, error) {
