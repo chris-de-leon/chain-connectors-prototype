@@ -44,10 +44,10 @@ func (consumer *BlockConsumer) Cursor(ctx context.Context) (*string, error) {
 
 func (consumer *BlockConsumer) Consume(ctx context.Context, block *proto.Block) error {
 	consumeScript := redis.NewScript(`
-    local hash_key = KEYS[1]
+    local cursor_key = KEYS[1]
     local stream_key = KEYS[2]
 
-    redis.call("HSET", hash_key, "cursor", ARGV[1])
+    redis.call("HSET", cursor_key, "cursor", ARGV[1])
     for i = 2, #ARGV do
       redis.call("XADD", stream_key, "*", "data", ARGV[i])
     end
