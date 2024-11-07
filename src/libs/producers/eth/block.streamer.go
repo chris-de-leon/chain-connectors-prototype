@@ -143,30 +143,22 @@ func (streamer *BlockStreamer) WaitForNextBlockHeader(ctx context.Context) error
 	}
 }
 
-func (streamer *BlockStreamer) WaitForNextBlock(ctx context.Context, currHeight *big.Int) (*ethtypes.Block, error) {
+func (streamer *BlockStreamer) WaitForNextBlockHeight(ctx context.Context, currHeight *big.Int) (string, error) {
 	if streamer.isStopped {
-		return nil, ErrStreamerStopped
+		return "", ErrStreamerStopped
 	}
 
 	nextHeight := new(big.Int).Add(currHeight, big.NewInt(1))
 
 	latestHeight, err := streamer.client.BlockNumber(ctx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if nextHeight.Cmp(new(big.Int).SetUint64(latestHeight)) == 1 {
 		if err := streamer.WaitForNextBlockHeader(ctx); err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 
-	block, err := streamer.client.BlockByNumber(ctx, nextHeight)
-	if err != nil {
-		return nil, err
-	}
-	if block == nil {
-		return nil, fmt.Errorf("unexpectedly received empty block for height '%d'", nextHeight)
-	}
-
-	return block, nil
+	return nextHeight.String(), nil
 }

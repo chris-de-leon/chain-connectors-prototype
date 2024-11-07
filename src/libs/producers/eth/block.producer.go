@@ -2,13 +2,11 @@ package eth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"google.golang.org/grpc"
 )
 
@@ -37,20 +35,12 @@ func (producer BlockProducer) Blocks(initBlock *proto.InitBlock, stream grpc.Ser
 	}
 
 	for {
-		block, err := producer.stream.WaitForNextBlock(ctx, cursor)
+		height, err := producer.stream.WaitForNextBlockHeight(ctx, cursor)
 		if err != nil {
 			return err
 		}
 
-		data, err := producer.stringifyBlock(block)
-		if err != nil {
-			return err
-		}
-
-		err = stream.Send(&proto.Block{
-			Height: block.Number().String(),
-			Data:   string(data),
-		})
+		err = stream.Send(&proto.Block{Height: height})
 		if err != nil {
 			return err
 		}
@@ -83,36 +73,4 @@ func (producer BlockProducer) initCursor(ctx context.Context, initBlock *proto.I
 	}
 
 	return cursor, nil
-}
-
-func (producer BlockProducer) stringifyBlock(block *ethtypes.Block) ([]byte, error) {
-	return json.Marshal(map[string]any{
-		"receivedAt": block.ReceivedAt.String(),
-		"baseFee":    block.BaseFee().String(),
-		// "beaconRoot":     block.BeaconRoot().String(), // throws an error
-		"blobGasUsed": block.BlobGasUsed(),
-		"bloom":       block.Bloom().Bytes(),
-		// "body":            block.Body(), // redundant
-		"coinbase":      block.Coinbase().String(),
-		"difficulty":    block.Difficulty().String(),
-		"excessBlobGas": block.ExcessBlobGas(),
-		"extra":         block.Extra(),
-		"gasLimit":      block.GasLimit(),
-		"gasUsed":       block.GasUsed(),
-		"hash":          block.Hash().String(),
-		"header":        block.Header(),
-		"mixDigest":     block.MixDigest().String(),
-		"nonce":         block.Nonce(),
-		"number":        block.Number(),
-		"parentHash":    block.ParentHash().String(),
-		"receiptHash":   block.ReceiptHash().String(),
-		"root":          block.Root().String(),
-		"size":          block.Size(),
-		"time":          block.Time(),
-		"transactions":  block.Transactions(),
-		"txHash":        block.TxHash().String(),
-		"uncleHash":     block.UncleHash().String(),
-		"uncles":        block.Uncles(),
-		"withdrawals":   block.Withdrawals(),
-	})
 }

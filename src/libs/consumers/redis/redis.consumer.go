@@ -59,7 +59,7 @@ func (consumer *BlockConsumer) Consume(ctx context.Context, block *proto.Block) 
 		ctx,
 		consumer.client,
 		[]string{consumer.cursorKey, consumer.streamKey},
-		[]any{block.Height, block.Data},
+		[]any{block.Height, block.Height},
 	).Err()
 
 	if err != nil {
