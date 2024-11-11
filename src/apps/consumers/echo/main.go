@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stream, err := proto.NewBlockProducerClient(conn).Blocks(ctx, &proto.InitBlock{Height: nil})
+	stream, err := proto.NewChainCursorClient(conn).Cursors(ctx, &proto.StartCursor{Value: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func main() {
 			case <-ctx.Done():
 				return nil
 			default:
-				block, err := stream.Recv()
+				cursor, err := stream.Recv()
 				if status.Code(err) == codes.Canceled {
 					return nil
 				}
@@ -50,7 +50,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Received block %s\n", block.Height)
+				fmt.Printf("Received cursor %s\n", cursor.Value)
 			}
 		}
 	})

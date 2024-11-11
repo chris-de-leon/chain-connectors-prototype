@@ -1,0 +1,17 @@
+services:
+  redis:
+    image: docker.io/redis:7.2.1-alpine3.18
+    container_name: redis
+    entrypoint: /bin/sh
+    command: -c redis-server --port 6379 --loglevel debug
+    ports:
+      - "6379:6379"
+  solana:
+    image: solanalabs/solana:v1.18.23
+    container_name: solana
+    entrypoint: /bin/sh
+    command: -c 'solana-test-validator --rpc-pubsub-enable-block-subscription'
+    ports:
+      - "8899:8899"
+      - "8900:8900"
+      - "9900:9900"

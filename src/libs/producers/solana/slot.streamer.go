@@ -1,4 +1,4 @@
-package eth
+package solana
 
 import (
 	"context"
@@ -9,38 +9,38 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ethereum/go-ethereum"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/ws"
 )
 
 var ErrStreamerStopped = errors.New("streamer has been stopped")
 
-type BlockReader interface {
-	ethereum.BlockNumberReader
-	ethereum.ChainReader
-}
-
-type BlockStreamer struct {
-	client    BlockReader
+type SlotStreamer struct {
+	rpcClient *rpc.Client
+	wssClient *ws.Client
 	logger    *log.Logger
 	signal    *sync.Cond
+	txVersion *uint64
 	isStopped bool
 }
 
-func NewBlockStreamer(client BlockReader, logger *log.Logger) *BlockStreamer {
-	return &BlockStreamer{
+func NewSlotStreamer(rpcClient *rpc.Client, wssClient *ws.Client, logger *log.Logger) *SlotStreamer {
+	txVersion := uint64(0)
+	return &SlotStreamer{
 		signal:    sync.NewCond(&sync.Mutex{}),
+		rpcClient: rpcClient,
+		wssClient: wssClient,
 		logger:    logger,
-		client:    client,
+		txVersion: &txVersion,
 		isStopped: false,
 	}
 }
 
-func NewBlockStreamerLogger() *log.Logger {
-	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "eth-block-producer"), log.LstdFlags)
+func NewSlotStreamerLogger() *log.Logger {
+	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "solana-slot-producer"), log.LstdFlags)
 }
 
-func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
+func (streamer *SlotStreamer) Subscribe(ctx context.Context) error {
 	if streamer.isStopped {
 		return ErrStreamerStopped
 	} else {
@@ -58,20 +58,18 @@ func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
 		}()
 	}
 
-	headers := make(chan *ethtypes.Header)
-	defer close(headers)
-
-	sub, err := streamer.client.SubscribeNewHead(ctx, headers)
+	sub, err := streamer.wssClient.SlotSubscribe()
 	if err != nil {
 		return err
-	} else {
-		defer sub.Unsubscribe()
 	}
 
-	streamer.logger.Printf("Waiting for new blocks...")
+	streamer.logger.Printf("Waiting for new finalized slots...")
+	var lastSlot *uint64 = nil
+
 	for {
 		select {
 		case <-ctx.Done():
+			sub.Unsubscribe()
 			return nil
 		case err, ok := <-sub.Err():
 			if !ok {
@@ -79,18 +77,32 @@ func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
 			} else {
 				return err
 			}
-		case header, ok := <-headers:
+		case _, ok := <-sub.Response():
 			if !ok {
 				return nil
-			} else {
-				streamer.signal.Broadcast()
-				streamer.logger.Printf("Received block %s", header.Number.String())
 			}
+
+			slot, err := streamer.rpcClient.GetSlot(ctx, rpc.CommitmentFinalized)
+			if ctx.Err() != nil {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
+
+			if lastSlot == nil || *lastSlot < slot {
+				streamer.logger.Printf("New finalized slot: %d", slot)
+				streamer.signal.Broadcast()
+			}
+			if lastSlot == nil {
+				lastSlot = new(uint64)
+			}
+			*lastSlot = slot
 		}
 	}
 }
 
-func (streamer *BlockStreamer) WaitForNextBlockHeight(ctx context.Context) error {
+func (streamer *SlotStreamer) WaitForNextFinalizedSlot(ctx context.Context) error {
 	if streamer.isStopped {
 		return ErrStreamerStopped
 	}
@@ -143,24 +155,24 @@ func (streamer *BlockStreamer) WaitForNextBlockHeight(ctx context.Context) error
 	}
 }
 
-func (streamer *BlockStreamer) GetNextBlockHeight(ctx context.Context, curr *big.Int) (*big.Int, error) {
+func (streamer *SlotStreamer) GetNextSlot(ctx context.Context, curr *big.Int) (*big.Int, error) {
 	if streamer.isStopped {
 		return nil, ErrStreamerStopped
 	}
 
-	latestBlockNumUint64, err := streamer.client.BlockNumber(ctx)
+	latestSlotUint64, err := streamer.rpcClient.GetSlot(ctx, rpc.CommitmentFinalized)
 	if err != nil {
 		return nil, err
 	}
 
-	latestBlockNumBigInt := new(big.Int).SetUint64(latestBlockNumUint64)
-	if curr == nil || curr.Cmp(latestBlockNumBigInt) == -1 {
-		return latestBlockNumBigInt, nil
+	latestSlotBigInt := new(big.Int).SetUint64(latestSlotUint64)
+	if curr == nil || curr.Cmp(latestSlotBigInt) == -1 {
+		return latestSlotBigInt, nil
 	}
 
-	if err := streamer.WaitForNextBlockHeight(ctx); err != nil {
+	if err := streamer.WaitForNextFinalizedSlot(ctx); err != nil {
 		return nil, err
 	} else {
-		return new(big.Int).Add(latestBlockNumBigInt, new(big.Int).SetUint64(1)), nil
+		return new(big.Int).Add(latestSlotBigInt, new(big.Int).SetUint64(1)), nil
 	}
 }

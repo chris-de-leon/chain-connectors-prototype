@@ -1,4 +1,4 @@
-package geth
+package eth_testutils
 
 import (
 	"crypto/ecdsa"

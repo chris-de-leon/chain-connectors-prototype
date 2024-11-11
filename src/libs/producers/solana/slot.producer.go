@@ -1,4 +1,4 @@
-package eth
+package solana
 
 import (
 	"fmt"
@@ -8,23 +8,23 @@ import (
 	"google.golang.org/grpc"
 )
 
-type BlockProducer struct {
+type SlotProducer struct {
 	proto.UnimplementedChainCursorServer
-	stream *BlockStreamer
+	stream *SlotStreamer
 }
 
-func NewBlockProducer(stream *BlockStreamer) BlockProducer {
-	return BlockProducer{
+func NewSlotProducer(stream *SlotStreamer) SlotProducer {
+	return SlotProducer{
 		stream: stream,
 	}
 }
 
-func (producer BlockProducer) RegisterToServer(srv *grpc.Server) *grpc.Server {
+func (producer SlotProducer) RegisterToServer(srv *grpc.Server) *grpc.Server {
 	proto.RegisterChainCursorServer(srv, producer)
 	return srv
 }
 
-func (producer BlockProducer) Cursors(start *proto.StartCursor, stream grpc.ServerStreamingServer[proto.Cursor]) error {
+func (producer SlotProducer) Cursors(start *proto.StartCursor, stream grpc.ServerStreamingServer[proto.Cursor]) error {
 	ctx := stream.Context()
 
 	var cur *big.Int = nil
@@ -38,7 +38,7 @@ func (producer BlockProducer) Cursors(start *proto.StartCursor, stream grpc.Serv
 	}
 
 	for {
-		value, err := producer.stream.GetNextBlockHeight(ctx, cur)
+		value, err := producer.stream.GetNextSlot(ctx, cur)
 		if err != nil {
 			return err
 		}

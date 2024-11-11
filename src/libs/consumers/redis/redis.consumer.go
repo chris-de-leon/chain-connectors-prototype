@@ -11,27 +11,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type BlockConsumer struct {
+type Consumer struct {
 	client    *redis.Client
 	logger    *log.Logger
 	streamKey string
 	cursorKey string
 }
 
-func NewBlockConsumer(name string, client *redis.Client, logger *log.Logger) *BlockConsumer {
-	return &BlockConsumer{
-		streamKey: fmt.Sprintf("%s:block-stream", name),
-		cursorKey: fmt.Sprintf("%s:block-cursor", name),
+func NewConsumer(name string, client *redis.Client, logger *log.Logger) *Consumer {
+	return &Consumer{
+		streamKey: fmt.Sprintf("%s:stream", name),
+		cursorKey: fmt.Sprintf("%s:cursor", name),
 		logger:    logger,
 		client:    client,
 	}
 }
 
-func NewBlockConsumerLogger(name string) *log.Logger {
+func NewConsumerLogger(name string) *log.Logger {
 	return log.New(os.Stdout, fmt.Sprintf("[%s-consumer] ", name), log.LstdFlags)
 }
 
-func (consumer *BlockConsumer) Cursor(ctx context.Context) (*string, error) {
+func (consumer *Consumer) Cursor(ctx context.Context) (*string, error) {
 	cursor, err := consumer.client.HGet(ctx, consumer.cursorKey, "cursor").Result()
 	if errors.Is(redis.Nil, err) {
 		return nil, nil
@@ -42,7 +42,7 @@ func (consumer *BlockConsumer) Cursor(ctx context.Context) (*string, error) {
 	return &cursor, nil
 }
 
-func (consumer *BlockConsumer) Consume(ctx context.Context, block *proto.Block) error {
+func (consumer *Consumer) Consume(ctx context.Context, cursor *proto.Cursor) error {
 	consumeScript := redis.NewScript(`
     local cursor_key = KEYS[1]
     local stream_key = KEYS[2]
@@ -59,13 +59,13 @@ func (consumer *BlockConsumer) Consume(ctx context.Context, block *proto.Block) 
 		ctx,
 		consumer.client,
 		[]string{consumer.cursorKey, consumer.streamKey},
-		[]any{block.Height, block.Height},
+		[]any{cursor.Value, cursor.Value},
 	).Err()
 
 	if err != nil {
 		return err
 	} else {
-		consumer.logger.Printf("Consumed block %s", block.Height)
+		consumer.logger.Printf("Cursor: %s", cursor.Value)
 	}
 
 	return nil

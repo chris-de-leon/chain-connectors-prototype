@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"math/big"
 	"os/signal"
 	"syscall"
 
@@ -29,10 +30,19 @@ func main() {
 	redisClient := redisV9.NewClient(&redisV9.Options{Addr: redisUrl, ContextTimeoutEnabled: true})
 	defer redisClient.Close()
 
-	redisConsmr := redis.NewBlockConsumer(consumerName, redisClient, redis.NewBlockConsumerLogger(consumerName))
+	redisConsmr := redis.NewConsumer(consumerName, redisClient, redis.NewConsumerLogger(consumerName))
 	cursor, err := redisConsmr.Cursor(ctx)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if cursor != nil {
+		value, ok := new(big.Int).SetString(*cursor, 10)
+		if !ok {
+			log.Fatalf("failed to convert cursor '%s' to big int", *cursor)
+		} else {
+			*cursor = new(big.Int).Add(value, new(big.Int).SetUint64(1)).String()
+		}
 	}
 
 	conn, err := grpc.NewClient(serverUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -40,7 +50,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stream, err := proto.NewBlockProducerClient(conn).Blocks(ctx, &proto.InitBlock{Height: cursor})
+	stream, err := proto.NewChainCursorClient(conn).Cursors(ctx, &proto.StartCursor{Value: cursor})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +62,7 @@ func main() {
 			case <-ctx.Done():
 				return nil
 			default:
-				block, err := stream.Recv()
+				cursor, err := stream.Recv()
 				if status.Code(err) == codes.Canceled {
 					return nil
 				}
@@ -62,7 +72,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				if err := redisConsmr.Consume(ctx, block); err != nil {
+				if err := redisConsmr.Consume(ctx, cursor); err != nil {
 					return err
 				}
 			}

@@ -1,4 +1,4 @@
-package geth
+package eth_testutils
 
 import (
 	"context"
@@ -12,22 +12,21 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 )
 
-type BlockGenerator struct {
+type TransactionGenerator struct {
 	account *AugmentedAccount
 	logger  *log.Logger
 }
 
-func NewBlockGenerator(acct *AugmentedAccount, logger *log.Logger) *BlockGenerator {
-	return &BlockGenerator{account: acct, logger: logger}
+func NewTransactionGenerator(acct *AugmentedAccount, logger *log.Logger) *TransactionGenerator {
+	return &TransactionGenerator{account: acct, logger: logger}
 }
 
-func NewBlockGeneratorLogger() *log.Logger {
-	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "block-generator"), log.LstdFlags)
+func NewTransactionGeneratorLogger() *log.Logger {
+	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "transaction-generator"), log.LstdFlags)
 }
 
-func (generator *BlockGenerator) Start(ctx context.Context, interval time.Duration, count int) error {
-	timerDuration := time.Duration(interval) * time.Millisecond
-	timer := time.NewTimer(timerDuration)
+func (generator *TransactionGenerator) Start(ctx context.Context, interval time.Duration, count int) error {
+	timer := time.NewTimer(interval)
 	defer timer.Stop()
 	for {
 		// Suppose instead of a timer we used a 2-second ticker but it takes 3+ seconds
@@ -36,7 +35,7 @@ func (generator *BlockGenerator) Start(ctx context.Context, interval time.Durati
 		// we want to fully wait another 2 seconds *from the time we finished processing
 		// the last round* before trying to process the data again. With that in mind a
 		// timer would be more appropriate here.
-		timer.Reset(timerDuration)
+		timer.Reset(interval)
 		select {
 		case <-ctx.Done():
 			return nil
@@ -53,7 +52,7 @@ func (generator *BlockGenerator) Start(ctx context.Context, interval time.Durati
 	}
 }
 
-func (generator *BlockGenerator) sendDummyTransaction(ctx context.Context) error {
+func (generator *TransactionGenerator) sendDummyTransaction(ctx context.Context) error {
 	oneETHER := new(big.Int).Mul(big.NewInt(1), big.NewInt(params.Ether))
 	addr := generator.account.Addr()
 
@@ -77,7 +76,7 @@ func (generator *BlockGenerator) sendDummyTransaction(ctx context.Context) error
 		return err
 	}
 
-	if err = generator.account.SignSendTx(
+	hash, err := generator.account.SignSendTx(
 		ctx,
 		types.NewTx(
 			&types.DynamicFeeTx{
@@ -91,10 +90,14 @@ func (generator *BlockGenerator) sendDummyTransaction(ctx context.Context) error
 				Data:      nil,
 			},
 		),
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	} else {
-		defer generator.logger.Printf("New block: %s", generator.account.Backend().Commit())
+		defer func() {
+			generator.account.Backend().Commit()
+			generator.logger.Printf("New transaction: %s", hash.String())
+		}()
 	}
 
 	return nil

@@ -7,8 +7,14 @@ producer.build:
 consumer.test:
 	go test -v ./src/libs/consumers/$(CONSUMER)
 
+consumer.test.all:
+	go test -v ./src/libs/consumers/...
+
 producer.test:
 	go test -v ./src/libs/producers/$(PRODUCER)
+
+producer.test.all:
+	go test -v ./src/libs/producers/...
 
 consumer.run:
 	go run ./src/apps/consumers/$(CONSUMER)/main.go
@@ -21,6 +27,12 @@ docker.build.all:
 
 docker.build.one:
 	docker build --build-arg APP_DIR=$(APP_DIR) --tag $(TAG) .
+
+docker.compose.up:
+	docker compose up --build -d
+
+docker.compose.down:
+	docker compose down --remove-orphans
 
 build.all:
 	bash ./scripts/build.local.sh "$(CONCURRENCY)"

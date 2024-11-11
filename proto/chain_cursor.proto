@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package chain_cursor;
+
+option go_package = "github.com/chris-de-leon/chain-connectors/proto";
+
+service ChainCursor {
+  rpc Cursors(StartCursor) returns (stream Cursor);
+}
+
+message StartCursor {
+  optional string value = 1;
+}
+
+message Cursor {
+  string value = 1;
+}
+
