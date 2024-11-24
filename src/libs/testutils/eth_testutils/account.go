@@ -9,8 +9,8 @@ import (
 )
 
 type Account struct {
-	privateKey *ecdsa.PrivateKey
-	address    common.Address
+	PrivateKey *ecdsa.PrivateKey
+	Address    common.Address
 }
 
 func NewAccount() (*Account, error) {
@@ -20,13 +20,9 @@ func NewAccount() (*Account, error) {
 	}
 
 	return &Account{
-		privateKey: privateKey,
-		address:    crypto.PubkeyToAddress(privateKey.PublicKey),
+		PrivateKey: privateKey,
+		Address:    crypto.PubkeyToAddress(privateKey.PublicKey),
 	}, nil
-}
-
-func (acct *Account) Addr() common.Address {
-	return acct.address
 }
 
 func (acct *Account) SetBackend(backend *simulated.Backend) *AugmentedAccount {

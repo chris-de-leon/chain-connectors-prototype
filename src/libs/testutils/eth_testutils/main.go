@@ -15,7 +15,7 @@ func InitBackend(acct *Account) (*simulated.Backend, error) {
 	}
 
 	return simulated.NewBackend(types.GenesisAlloc{
-		acct.Addr(): types.Account{
+		acct.Address: types.Account{
 			Balance: balance,
 		},
 	}), nil

@@ -3,15 +3,35 @@ services:
     image: docker.io/redis:7.2.1-alpine3.18
     container_name: redis
     entrypoint: /bin/sh
-    command: -c redis-server --port 6379 --loglevel debug
+    command: -c 'redis-server --port 6379 --loglevel debug'
     ports:
       - "6379:6379"
+  onflow:
+    image: gcr.io/flow-container-registry/emulator:1.1.0
+    container_name: onflow
+    environment:
+      FLOW_SERVICEPRIVATE_KEY: aff3a277caf2bdd6582c156ae7b07dbca537da7833309de88e56987faa2c0f1b
+      FLOW_SERVICEKEYHASHALGO: SHA3_256
+      FLOW_SERVICEKEYSIGALGO: ECDSA_P256
+      FLOW_SKIPTRANSACTIONVALIDATION: false
+      FLOW_TRANSACTIONMAXGASLIMIT: 9999
+      FLOW_TRANSACTIONFEESENABLED: true
+      FLOW_STARTBLOCKHEIGHT: 0
+      FLOW_SIMPLEADDRESSES: false
+      FLOW_CHAINID: emulator
+      FLOW_BLOCK_TIME: 0ms
+      FLOW_LOGFORMAT: text
+      FLOW_SNAPSHOT: false
+      FLOW_PERSIST: false
+      FLOW_VERBOSE: true
+      FLOW_HOST: 0.0.0.0
+      FLOW_INIT: false
+      FLOW_PORT: 3569
+    ports:
+      - "3569:3569"
   solana:
     image: solanalabs/solana:v1.18.23
     container_name: solana
-    entrypoint: /bin/sh
-    command: -c 'solana-test-validator --rpc-pubsub-enable-block-subscription'
     ports:
       - "8899:8899"
       - "8900:8900"
-      - "9900:9900"

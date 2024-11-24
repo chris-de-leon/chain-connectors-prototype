@@ -14,6 +14,7 @@
           packages = [
             pkgs.grpc-tools
             pkgs.go_1_23
+            pkgs.nodejs
             pkgs.redis
           ];
         };

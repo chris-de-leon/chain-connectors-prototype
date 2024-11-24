@@ -1,4 +1,4 @@
-package eth_testutils
+package flow_testutils
 
 import (
 	"context"
@@ -49,12 +49,12 @@ func (generator *TransactionGenerator) Start(ctx context.Context, interval time.
 }
 
 func (generator *TransactionGenerator) sendDummyTransaction(ctx context.Context) error {
-	tx, err := generator.account.TransferTokens(ctx, generator.account.Address, 1)
+	res, err := generator.account.CreateAccount(ctx)
 
 	if err != nil {
 		return err
 	} else {
-		defer generator.logger.Printf("New transaction: %s", tx.Hash().String())
+		defer generator.logger.Printf("New transaction: %s", res.Receipt.TransactionID.String())
 	}
 
 	return nil

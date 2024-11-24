@@ -1,4 +1,4 @@
-package eth
+package flow
 
 import (
 	"context"
@@ -9,35 +9,29 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ethereum/go-ethereum"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/onflow/flow-go-sdk/access/grpc"
 )
 
 var ErrStreamerStopped = errors.New("streamer has been stopped")
 
-type BlockReader interface {
-	ethereum.BlockNumberReader
-	ethereum.ChainReader
-}
-
 type BlockStreamer struct {
-	client    BlockReader
+	client    *grpc.Client
 	logger    *log.Logger
 	signal    *sync.Cond
 	isStopped bool
 }
 
-func NewBlockStreamer(client BlockReader, logger *log.Logger) *BlockStreamer {
+func NewBlockStreamer(client *grpc.Client, logger *log.Logger) *BlockStreamer {
 	return &BlockStreamer{
 		signal:    sync.NewCond(&sync.Mutex{}),
-		logger:    logger,
 		client:    client,
+		logger:    logger,
 		isStopped: false,
 	}
 }
 
 func NewBlockStreamerLogger() *log.Logger {
-	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "eth-block-producer"), log.LstdFlags)
+	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "flow-block-producer"), log.LstdFlags)
 }
 
 func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
@@ -58,14 +52,14 @@ func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
 		}()
 	}
 
-	headers := make(chan *ethtypes.Header)
-	defer close(headers)
-
-	sub, err := streamer.client.SubscribeNewHead(ctx, headers)
+	latestBlock, err := streamer.client.GetLatestBlock(ctx, true)
 	if err != nil {
 		return err
-	} else {
-		defer sub.Unsubscribe()
+	}
+
+	dataChan, errChan, err := streamer.client.SubscribeExecutionDataByBlockHeight(ctx, latestBlock.Height)
+	if err != nil {
+		return err
 	}
 
 	streamer.logger.Printf("Waiting for new blocks...")
@@ -73,18 +67,18 @@ func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case err, ok := <-sub.Err():
+		case err, ok := <-errChan:
 			if !ok {
 				return nil
 			} else {
 				return err
 			}
-		case header, ok := <-headers:
+		case data, ok := <-dataChan:
 			if !ok {
 				return nil
 			} else {
 				streamer.signal.Broadcast()
-				streamer.logger.Printf("New block: %s", header.Number.String())
+				streamer.logger.Printf("New block: %d", data.Height)
 			}
 		}
 	}
@@ -148,19 +142,19 @@ func (streamer *BlockStreamer) GetNextBlockHeight(ctx context.Context, curr *big
 		return nil, ErrStreamerStopped
 	}
 
-	latestBlockNumUint64, err := streamer.client.BlockNumber(ctx)
+	latestBlockHeader, err := streamer.client.GetLatestBlockHeader(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	latestBlockNumBigInt := new(big.Int).SetUint64(latestBlockNumUint64)
-	if curr == nil || curr.Cmp(latestBlockNumBigInt) == -1 {
-		return latestBlockNumBigInt, nil
+	latestBlockNum := new(big.Int).SetUint64(latestBlockHeader.Height)
+	if curr == nil || curr.Cmp(latestBlockNum) == -1 {
+		return latestBlockNum, nil
 	}
 
 	if err := streamer.WaitForNextBlockHeight(ctx); err != nil {
 		return nil, err
 	} else {
-		return new(big.Int).Add(latestBlockNumBigInt, new(big.Int).SetUint64(1)), nil
+		return new(big.Int).Add(latestBlockNum, new(big.Int).SetUint64(1)), nil
 	}
 }
