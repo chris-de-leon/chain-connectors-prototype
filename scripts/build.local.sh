@@ -3,7 +3,7 @@
 set -eo pipefail
 
 if [ -z "$1" ]; then
-  concurrency="$(nproc --all)"
+  concurrency="0"
 else
   concurrency="$1"
 fi
