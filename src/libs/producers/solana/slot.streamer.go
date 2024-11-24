@@ -61,6 +61,8 @@ func (streamer *SlotStreamer) Subscribe(ctx context.Context) error {
 	sub, err := streamer.wssClient.SlotSubscribe()
 	if err != nil {
 		return err
+	} else {
+		defer sub.Unsubscribe()
 	}
 
 	streamer.logger.Printf("Waiting for new finalized slots...")
@@ -69,7 +71,6 @@ func (streamer *SlotStreamer) Subscribe(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			sub.Unsubscribe()
 			return nil
 		case err, ok := <-sub.Err():
 			if !ok {
