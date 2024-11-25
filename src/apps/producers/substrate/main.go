@@ -8,9 +8,9 @@ import (
 	"syscall"
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
+	"github.com/chris-de-leon/chain-connectors/src/libs/chains/substrate"
 	"github.com/chris-de-leon/chain-connectors/src/libs/common"
 	"github.com/chris-de-leon/chain-connectors/src/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/libs/producers/substrate"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

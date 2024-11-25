@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/chains/flow"
 	"github.com/chris-de-leon/chain-connectors/src/libs/common"
 	"github.com/chris-de-leon/chain-connectors/src/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/libs/producers/flow"
 	onflow "github.com/onflow/flow-go-sdk/access/grpc"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"

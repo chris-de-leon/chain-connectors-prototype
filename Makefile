@@ -4,18 +4,6 @@ consumer.build:
 producer.build:
 	go build -o ./bin/apps/producers/$(PRODUCER)/bin ./src/apps/producers/$(PRODUCER)/main.go
 
-consumer.test:
-	go test -v ./src/libs/consumers/$(CONSUMER)
-
-consumer.test.all:
-	go test -v ./src/libs/consumers/...
-
-producer.test:
-	go test -v ./src/libs/producers/$(PRODUCER)
-
-producer.test.all:
-	go test -v ./src/libs/producers/...
-
 consumer.run:
 	go run ./src/apps/consumers/$(CONSUMER)/main.go
 
@@ -36,6 +24,9 @@ docker.compose.down:
 
 build.all:
 	bash ./scripts/build.local.sh "$(CONCURRENCY)"
+
+test.all:
+	go test -v ./src/libs/...
 
 protogen:
 	bash ./scripts/protogen.sh

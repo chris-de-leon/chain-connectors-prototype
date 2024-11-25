@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/chains/solana"
 	"github.com/chris-de-leon/chain-connectors/src/libs/common"
 	"github.com/chris-de-leon/chain-connectors/src/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/libs/producers/solana"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"golang.org/x/sync/errgroup"

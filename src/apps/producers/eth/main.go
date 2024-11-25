@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/chains/eth"
 	"github.com/chris-de-leon/chain-connectors/src/libs/common"
 	"github.com/chris-de-leon/chain-connectors/src/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/libs/producers/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
