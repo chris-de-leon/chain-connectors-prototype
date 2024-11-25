@@ -1,4 +1,4 @@
-package solana
+package substrate
 
 import (
 	"context"
@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
-	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/solana_testutils"
-	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/substrate_testutils"
 	"golang.org/x/net/nettest"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -20,24 +19,22 @@ import (
 )
 
 const (
-	TESTS_DUR = time.Millisecond * 1100
+	TESTS_DUR = time.Millisecond * 6750
 	TXN_DELAY = time.Millisecond * 100
 	TXN_COUNT = 1
 )
 
-func TestSolanaBlockServices(t *testing.T) {
+func TestSubstrateBlockServices(t *testing.T) {
 	cursorsReceived := []*proto.Cursor{}
 	ctx := context.Background()
 	eg := new(errgroup.Group)
 
-	backend, err := solana_testutils.InitBackend(ctx)
+	backend, err := substrate_testutils.InitBackend()
 	if err != nil {
 		t.Fatal(err)
 	} else {
 		t.Cleanup(func() {
-			if err := backend.Close(); err != nil {
-				t.Log(err)
-			}
+			backend.Client.Close()
 		})
 	}
 
@@ -48,8 +45,8 @@ func TestSolanaBlockServices(t *testing.T) {
 		// NOTE: the gRPC server will automatically close the listener
 	}
 
-	stm := NewSlotStreamer(backend.RpcClient, backend.WssClient, NewSlotStreamerLogger())
-	prd := NewSlotProducer(stm)
+	stm := NewBlockStreamer(backend, NewBlockStreamerLogger())
+	prd := NewBlockProducer(stm)
 	srv := prd.RegisterToServer(grpc.NewServer())
 
 	testCtx, testCancel := context.WithTimeout(ctx, TESTS_DUR)
@@ -106,14 +103,14 @@ func TestSolanaBlockServices(t *testing.T) {
 		t.Fatal("consumer received no blocks")
 	}
 
-	latestSlotNum, err := backend.RpcClient.GetSlot(ctx, rpc.CommitmentFinalized)
+	latestblock, err := backend.RPC.Chain.GetBlockLatest()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	consumerSlotNum := cursorsReceived[len(cursorsReceived)-1].Value
-	if consumerSlotNum != strconv.FormatUint(latestSlotNum, 10) {
-		t.Fatalf("consumer did not receive the latest slot (consumer = %s, latest = %d)", consumerSlotNum, latestSlotNum)
+	if consumerSlotNum != strconv.FormatUint(uint64(latestblock.Block.Header.Number), 10) {
+		t.Fatalf("consumer did not receive the latest block (consumer = %s, latest = %d)", consumerSlotNum, latestblock.Block.Header.Number)
 	}
 
 	for i := range len(cursorsReceived) - 1 {

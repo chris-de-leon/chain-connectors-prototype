@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	TESTS_DUR = time.Millisecond * 1100
+	TESTS_DUR = time.Millisecond * 3750
 	TXN_DELAY = time.Millisecond * 100
 	TXN_COUNT = 1
 )

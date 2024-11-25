@@ -22,33 +22,33 @@ type TransactionResult[T any] struct {
 	Result  T
 }
 
-func (acct *AugmentedAccount) SignTx(tx *flow.Transaction, keyIndex uint32) error {
-	return tx.SignEnvelope(acct.Address, keyIndex, acct.Signer)
+func (acct *AugmentedAccount) SignTx(tx *flow.Transaction, keyIndex uint32) (*flow.Transaction, error) {
+	return tx, tx.SignEnvelope(acct.Address, keyIndex, acct.Signer)
 }
 
-func (acct *AugmentedAccount) SendTx(ctx context.Context, tx *flow.Transaction) error {
-	return acct.Backend.SendTransaction(ctx, *tx)
+func (acct *AugmentedAccount) SendTx(ctx context.Context, tx *flow.Transaction) (*flow.Transaction, error) {
+	return tx, acct.Backend.SendTransaction(ctx, *tx)
 }
 
-func (acct *AugmentedAccount) WaitTx(ctx context.Context, tx *flow.Transaction) error {
+func (acct *AugmentedAccount) WaitTx(ctx context.Context, tx *flow.Transaction) (*flow.Transaction, error) {
 	status := flow.TransactionStatusUnknown
 
 	for status != flow.TransactionStatusSealed {
-		time.Sleep(time.Second)
 		result, err := acct.Backend.GetTransactionResult(ctx, tx.ID())
 		if err != nil {
-			return err
+			return nil, err
 		} else {
 			status = result.Status
 		}
+		time.Sleep(time.Second)
 	}
 
-	return nil
+	return tx, nil
 }
 
-func (acct *AugmentedAccount) SignAndSendTx(ctx context.Context, tx *flow.Transaction, keyIndex uint32) error {
-	if err := acct.SignTx(tx, keyIndex); err != nil {
-		return err
+func (acct *AugmentedAccount) SignAndSendTx(ctx context.Context, tx *flow.Transaction, keyIndex uint32) (*flow.Transaction, error) {
+	if tx, err := acct.SignTx(tx, keyIndex); err != nil {
+		return nil, err
 	} else {
 		return acct.SendTx(ctx, tx)
 	}
@@ -104,11 +104,11 @@ func (acct *AugmentedAccount) CreateAccount(ctx context.Context) (*TransactionRe
 		SetReferenceBlockID(block.ID).
 		SetPayer(acct.Address)
 
-	if err = acct.SignAndSendTx(ctx, tx, key.Index); err != nil {
+	if tx, err = acct.SignAndSendTx(ctx, tx, key.Index); err != nil {
 		return nil, err
 	}
 
-	if err = acct.WaitTx(ctx, tx); err != nil {
+	if tx, err = acct.WaitTx(ctx, tx); err != nil {
 		return nil, err
 	}
 

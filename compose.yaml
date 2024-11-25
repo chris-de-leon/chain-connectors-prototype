@@ -29,6 +29,14 @@ services:
       FLOW_PORT: 3569
     ports:
       - "3569:3569"
+  polkadot:
+    image: parity/polkadot:v1.16.2
+    container_name: polkadot
+    command: ["--no-prometheus", "--rpc-external", "--dev"]
+    ports:
+      - 30333:30333
+      - 9944:9944
+      - 9933:9933
   solana:
     image: solanalabs/solana:v1.18.23
     container_name: solana

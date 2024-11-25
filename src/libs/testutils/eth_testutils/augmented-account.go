@@ -3,6 +3,7 @@ package eth_testutils
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,6 +26,22 @@ func (acct *AugmentedAccount) SendTx(ctx context.Context, tx *types.Transaction)
 	} else {
 		return tx, err
 	}
+}
+
+func (acct *AugmentedAccount) WaitTx(ctx context.Context, tx *types.Transaction) (*types.Transaction, error) {
+	isPending := true
+
+	for isPending {
+		_, status, err := acct.Backend.Client().TransactionByHash(ctx, tx.Hash())
+		if err != nil {
+			return nil, err
+		} else {
+			isPending = status
+		}
+		time.Sleep(time.Second)
+	}
+
+	return tx, nil
 }
 
 func (acct *AugmentedAccount) SignAndSendTx(ctx context.Context, tx *types.Transaction) (*types.Transaction, error) {
@@ -75,8 +92,8 @@ func (acct *AugmentedAccount) TransferTokens(ctx context.Context, recipient comm
 	if err != nil {
 		return nil, err
 	} else {
-		defer acct.Backend.Commit()
+		acct.Backend.Commit()
 	}
 
-	return tx, err
+	return acct.WaitTx(ctx, tx)
 }
