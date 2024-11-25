@@ -1,46 +1,32 @@
-package eth
+package core
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"math/big"
-	"os"
 	"sync"
-
-	"github.com/ethereum/go-ethereum"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
 var ErrStreamerStopped = errors.New("streamer has been stopped")
 
-type BlockReader interface {
-	ethereum.BlockNumberReader
-	ethereum.ChainReader
-}
-
-type BlockStreamer struct {
-	client    BlockReader
+type Streamer struct {
 	logger    *log.Logger
 	signal    *sync.Cond
+	cursor    Cursor
 	isStopped bool
 }
 
-func NewBlockStreamer(client BlockReader, logger *log.Logger) *BlockStreamer {
-	return &BlockStreamer{
+func NewStreamer(cursor Cursor, logger *log.Logger) *Streamer {
+	return &Streamer{
 		signal:    sync.NewCond(&sync.Mutex{}),
 		logger:    logger,
-		client:    client,
+		cursor:    cursor,
 		isStopped: false,
 	}
 }
 
-func NewBlockStreamerLogger() *log.Logger {
-	return log.New(os.Stdout, fmt.Sprintf("[%s] ", "eth-block-producer"), log.LstdFlags)
-}
-
-func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
+func (streamer *Streamer) Subscribe(ctx context.Context) error {
 	if streamer.isStopped {
 		return ErrStreamerStopped
 	} else {
@@ -58,39 +44,14 @@ func (streamer *BlockStreamer) Subscribe(ctx context.Context) error {
 		}()
 	}
 
-	headers := make(chan *ethtypes.Header)
-	defer close(headers)
-
-	sub, err := streamer.client.SubscribeNewHead(ctx, headers)
-	if err != nil {
-		return err
-	} else {
-		defer sub.Unsubscribe()
-	}
-
-	streamer.logger.Printf("Waiting for new blocks...")
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case err, ok := <-sub.Err():
-			if !ok {
-				return nil
-			} else {
-				return err
-			}
-		case header, ok := <-headers:
-			if !ok {
-				return nil
-			} else {
-				streamer.signal.Broadcast()
-				streamer.logger.Printf("New block: %s", header.Number.String())
-			}
-		}
-	}
+	streamer.logger.Printf("Waiting for new data...")
+	return streamer.cursor.Subscribe(ctx, func(cursor *big.Int) {
+		streamer.logger.Printf("Received new cursor: %s", cursor.String())
+		streamer.signal.Broadcast()
+	})
 }
 
-func (streamer *BlockStreamer) WaitForNextBlockHeight(ctx context.Context) error {
+func (streamer *Streamer) WaitForNextCursor(ctx context.Context) error {
 	if streamer.isStopped {
 		return ErrStreamerStopped
 	}
@@ -143,24 +104,23 @@ func (streamer *BlockStreamer) WaitForNextBlockHeight(ctx context.Context) error
 	}
 }
 
-func (streamer *BlockStreamer) GetNextBlockHeight(ctx context.Context, curr *big.Int) (*big.Int, error) {
+func (streamer *Streamer) GetNextCursor(ctx context.Context, curr *big.Int) (*big.Int, error) {
 	if streamer.isStopped {
 		return nil, ErrStreamerStopped
 	}
 
-	latestBlockNumUint64, err := streamer.client.BlockNumber(ctx)
+	latestCursor, err := streamer.cursor.GetLatestValue(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	latestBlockNumBigInt := new(big.Int).SetUint64(latestBlockNumUint64)
-	if curr == nil || curr.Cmp(latestBlockNumBigInt) == -1 {
-		return latestBlockNumBigInt, nil
+	if curr == nil || curr.Cmp(latestCursor) == -1 {
+		return latestCursor, nil
 	}
 
-	if err := streamer.WaitForNextBlockHeight(ctx); err != nil {
+	if err := streamer.WaitForNextCursor(ctx); err != nil {
 		return nil, err
 	} else {
-		return new(big.Int).Add(latestBlockNumBigInt, new(big.Int).SetUint64(1)), nil
+		return new(big.Int).Add(latestCursor, new(big.Int).SetUint64(1)), nil
 	}
 }

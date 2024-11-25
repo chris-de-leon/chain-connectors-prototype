@@ -15,5 +15,5 @@ for path in $(cd ./src/apps && find * -type f -name *.go); do
   cmds+=("echo \"Building $src\" && go build -o $bin $src && echo \"Created $bin\"")
 done
 
-printf "\nUsing $concurrency processes to build ${#cmds[@]} apps\n"
+printf "\nBuilding ${#cmds[@]} apps...\n"
 printf "%s\n" "${cmds[@]}" | xargs -P $concurrency -I {} bash -c {}

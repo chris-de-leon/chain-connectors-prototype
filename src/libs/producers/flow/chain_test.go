@@ -1,15 +1,17 @@
-package substrate
+package flow
 
 import (
 	"context"
 	"io"
 	"math/big"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/core"
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
-	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/substrate_testutils"
+	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/flow_testutils"
 	"golang.org/x/net/nettest"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -19,22 +21,29 @@ import (
 )
 
 const (
-	TESTS_DUR = time.Millisecond * 6750
+	TESTS_DUR = time.Millisecond * 3750
 	TXN_DELAY = time.Millisecond * 100
 	TXN_COUNT = 1
 )
 
-func TestSubstrateBlockServices(t *testing.T) {
+func TestFlow(t *testing.T) {
 	cursorsReceived := []*proto.Cursor{}
 	ctx := context.Background()
 	eg := new(errgroup.Group)
 
-	backend, err := substrate_testutils.InitBackend()
+	acct, err := flow_testutils.NewEmulatorAccount()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	backend, err := flow_testutils.InitBackend()
 	if err != nil {
 		t.Fatal(err)
 	} else {
 		t.Cleanup(func() {
-			backend.Client.Close()
+			if err := backend.Close(); err != nil {
+				t.Log(err)
+			}
 		})
 	}
 
@@ -45,18 +54,42 @@ func TestSubstrateBlockServices(t *testing.T) {
 		// NOTE: the gRPC server will automatically close the listener
 	}
 
-	stm := NewBlockStreamer(backend, NewBlockStreamerLogger())
-	prd := NewBlockProducer(stm)
-	srv := prd.RegisterToServer(grpc.NewServer())
+	gen := flow_testutils.NewTransactionGenerator(acct.SetBackend(backend), flow_testutils.NewTransactionGeneratorLogger())
+	prd := core.NewProducer(
+		grpc.NewServer(),
+		core.NewStreamer(
+			NewChainCursor(backend),
+			NewLogger(),
+		),
+	)
 
 	testCtx, testCancel := context.WithTimeout(ctx, TESTS_DUR)
 	defer testCancel()
 
 	eg.Go(func() error {
-		return stm.Subscribe(testCtx)
+		if err := gen.Start(testCtx, TXN_DELAY, TXN_COUNT); err != nil {
+			if status.Code(err) == codes.DeadlineExceeded {
+				return nil
+			} else {
+				return err
+			}
+		} else {
+			return nil
+		}
 	})
 	eg.Go(func() error {
-		return srv.Serve(lis)
+		if err := prd.Stream.Subscribe(testCtx); err != nil {
+			if status.Code(err) == codes.DeadlineExceeded || (status.Code(err) == codes.Unknown && strings.Contains(err.Error(), "streamer has been stopped")) {
+				return nil
+			} else {
+				return err
+			}
+		} else {
+			return nil
+		}
+	})
+	eg.Go(func() error {
+		return prd.Server.Serve(lis)
 	})
 
 	// NOTE: we can only establish a connection once the server has been started
@@ -93,7 +126,7 @@ func TestSubstrateBlockServices(t *testing.T) {
 	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	} else {
-		srv.GracefulStop()
+		prd.Server.GracefulStop()
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -103,31 +136,31 @@ func TestSubstrateBlockServices(t *testing.T) {
 		t.Fatal("consumer received no blocks")
 	}
 
-	latestblock, err := backend.RPC.Chain.GetBlockLatest()
+	latestBlock, err := backend.GetLatestBlock(ctx, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	consumerSlotNum := cursorsReceived[len(cursorsReceived)-1].Value
-	if consumerSlotNum != strconv.FormatUint(uint64(latestblock.Block.Header.Number), 10) {
-		t.Fatalf("consumer did not receive the latest block (consumer = %s, latest = %d)", consumerSlotNum, latestblock.Block.Header.Number)
+	consumerBlockNum := cursorsReceived[len(cursorsReceived)-1].Value
+	if consumerBlockNum != strconv.FormatUint(latestBlock.Height, 10) {
+		t.Fatalf("consumer did not receive the latest block (consumer = %s, latest = %d)", consumerBlockNum, latestBlock.Height)
 	}
 
 	for i := range len(cursorsReceived) - 1 {
 		next := cursorsReceived[i+1].Value
 		curr := cursorsReceived[i].Value
 
-		nextSlot, prevOk := new(big.Int).SetString(next, 10)
+		nextHeight, prevOk := new(big.Int).SetString(next, 10)
 		if !prevOk {
 			t.Fatalf("failed to convert '%s' to big int", next)
 		}
 
-		currSlot, currOk := new(big.Int).SetString(curr, 10)
+		currHeight, currOk := new(big.Int).SetString(curr, 10)
 		if !currOk {
 			t.Fatalf("failed to convert '%s' to big int", curr)
 		}
 
-		if nextSlot.Cmp(new(big.Int).Add(currSlot, new(big.Int).SetUint64(1))) != 0 {
+		if nextHeight.Cmp(new(big.Int).Add(currHeight, new(big.Int).SetUint64(1))) != 0 {
 			cursors := make([]string, len(cursorsReceived))
 			for i := range cursorsReceived {
 				cursors[i] = cursorsReceived[i].Value

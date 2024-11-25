@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/core"
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
 	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/solana_testutils"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -25,7 +26,7 @@ const (
 	TXN_COUNT = 1
 )
 
-func TestSolanaBlockServices(t *testing.T) {
+func TestSolana(t *testing.T) {
 	cursorsReceived := []*proto.Cursor{}
 	ctx := context.Background()
 	eg := new(errgroup.Group)
@@ -48,18 +49,25 @@ func TestSolanaBlockServices(t *testing.T) {
 		// NOTE: the gRPC server will automatically close the listener
 	}
 
-	stm := NewSlotStreamer(backend.RpcClient, backend.WssClient, NewSlotStreamerLogger())
-	prd := NewSlotProducer(stm)
-	srv := prd.RegisterToServer(grpc.NewServer())
+	prd := core.NewProducer(
+		grpc.NewServer(),
+		core.NewStreamer(
+			NewChainCursor(
+				backend.RpcClient,
+				backend.WssClient,
+			),
+			NewLogger(),
+		),
+	)
 
 	testCtx, testCancel := context.WithTimeout(ctx, TESTS_DUR)
 	defer testCancel()
 
 	eg.Go(func() error {
-		return stm.Subscribe(testCtx)
+		return prd.Stream.Subscribe(testCtx)
 	})
 	eg.Go(func() error {
-		return srv.Serve(lis)
+		return prd.Server.Serve(lis)
 	})
 
 	// NOTE: we can only establish a connection once the server has been started
@@ -96,7 +104,7 @@ func TestSolanaBlockServices(t *testing.T) {
 	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	} else {
-		srv.GracefulStop()
+		prd.Server.GracefulStop()
 	}
 
 	if err := eg.Wait(); err != nil {

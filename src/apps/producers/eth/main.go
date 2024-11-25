@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/chris-de-leon/chain-connectors/src/libs/common"
+	"github.com/chris-de-leon/chain-connectors/src/libs/core"
 	"github.com/chris-de-leon/chain-connectors/src/libs/producers/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/sync/errgroup"
@@ -35,22 +36,25 @@ func main() {
 		defer wss.Close()
 	}
 
-	lgr := eth.NewBlockStreamerLogger()
-	stm := eth.NewBlockStreamer(wss, lgr)
-	prd := eth.NewBlockProducer(stm)
-	srv := prd.RegisterToServer(grpc.NewServer())
+	producer := core.NewProducer(
+		grpc.NewServer(),
+		core.NewStreamer(
+			eth.NewChainCursor(wss),
+			eth.NewLogger(),
+		),
+	)
 
 	eg := new(errgroup.Group)
 	eg.Go(func() error {
-		return stm.Subscribe(ctx)
+		return producer.Stream.Subscribe(ctx)
 	})
 	eg.Go(func() error {
-		return srv.Serve(lis)
+		return producer.Server.Serve(lis)
 	})
 
-	lgr.Printf("Listening on %s", serverUrl)
+	log.Printf("Listening on %s\n", serverUrl)
 	<-ctx.Done()
-	srv.GracefulStop()
+	producer.Server.GracefulStop()
 	if err := eg.Wait(); err != nil {
 		log.Fatal(err)
 	}

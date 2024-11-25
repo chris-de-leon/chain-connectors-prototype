@@ -1,4 +1,4 @@
-package solana
+package core
 
 import (
 	"fmt"
@@ -8,23 +8,19 @@ import (
 	"google.golang.org/grpc"
 )
 
-type SlotProducer struct {
+type Producer struct {
 	proto.UnimplementedChainCursorServer
-	stream *SlotStreamer
+	Server *grpc.Server
+	Stream *Streamer
 }
 
-func NewSlotProducer(stream *SlotStreamer) SlotProducer {
-	return SlotProducer{
-		stream: stream,
-	}
+func NewProducer(server *grpc.Server, stream *Streamer) *Producer {
+	producer := &Producer{Server: server, Stream: stream}
+	proto.RegisterChainCursorServer(server, producer)
+	return producer
 }
 
-func (producer SlotProducer) RegisterToServer(srv *grpc.Server) *grpc.Server {
-	proto.RegisterChainCursorServer(srv, producer)
-	return srv
-}
-
-func (producer SlotProducer) Cursors(start *proto.StartCursor, stream grpc.ServerStreamingServer[proto.Cursor]) error {
+func (producer *Producer) Cursors(start *proto.StartCursor, stream grpc.ServerStreamingServer[proto.Cursor]) error {
 	ctx := stream.Context()
 
 	var cur *big.Int = nil
@@ -38,7 +34,7 @@ func (producer SlotProducer) Cursors(start *proto.StartCursor, stream grpc.Serve
 	}
 
 	for {
-		value, err := producer.stream.GetNextSlot(ctx, cur)
+		value, err := producer.Stream.GetNextCursor(ctx, cur)
 		if err != nil {
 			return err
 		}

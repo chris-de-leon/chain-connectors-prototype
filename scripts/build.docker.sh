@@ -15,5 +15,5 @@ for path in $(cd ./src/apps && find * -type f -name *.go); do
   cmds+=("docker build --build-arg APP_DIR=$src_dir --tag chain-connectors.${pth_dir//\//.}:$(uuidgen) .")
 done
 
-printf "\nUsing $concurrency processes to build ${#cmds[@]} apps\n"
+printf "\nBuilding ${#cmds[@]} apps...\n"
 printf "%s\n" "${cmds[@]}" | xargs -P $concurrency -I {} bash -c {}

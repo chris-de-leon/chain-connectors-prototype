@@ -1,16 +1,16 @@
-package flow
+package eth
 
 import (
 	"context"
 	"io"
 	"math/big"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/chris-de-leon/chain-connectors/src/libs/core"
 	"github.com/chris-de-leon/chain-connectors/src/libs/proto"
-	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/flow_testutils"
+	"github.com/chris-de-leon/chain-connectors/src/libs/testutils/eth_testutils"
 	"golang.org/x/net/nettest"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -25,17 +25,17 @@ const (
 	TXN_COUNT = 1
 )
 
-func TestFlowBlockServices(t *testing.T) {
+func TestEth(t *testing.T) {
 	cursorsReceived := []*proto.Cursor{}
 	ctx := context.Background()
 	eg := new(errgroup.Group)
 
-	acct, err := flow_testutils.NewEmulatorAccount()
+	acct, err := eth_testutils.NewAccount()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	backend, err := flow_testutils.InitBackend()
+	backend, err := eth_testutils.InitBackend(acct)
 	if err != nil {
 		t.Fatal(err)
 	} else {
@@ -53,37 +53,26 @@ func TestFlowBlockServices(t *testing.T) {
 		// NOTE: the gRPC server will automatically close the listener
 	}
 
-	gen := flow_testutils.NewTransactionGenerator(acct.SetBackend(backend), flow_testutils.NewTransactionGeneratorLogger())
-	stm := NewBlockStreamer(backend, NewBlockStreamerLogger())
-	srv := NewBlockProducer(stm).RegisterToServer(grpc.NewServer())
+	gen := eth_testutils.NewTransactionGenerator(acct.SetBackend(backend), eth_testutils.NewTransactionGeneratorLogger())
+	prd := core.NewProducer(
+		grpc.NewServer(),
+		core.NewStreamer(
+			NewChainCursor(backend.Client()),
+			NewLogger(),
+		),
+	)
 
 	testCtx, testCancel := context.WithTimeout(ctx, TESTS_DUR)
 	defer testCancel()
 
 	eg.Go(func() error {
-		if err := gen.Start(testCtx, TXN_DELAY, TXN_COUNT); err != nil {
-			if status.Code(err) == codes.DeadlineExceeded {
-				return nil
-			} else {
-				return err
-			}
-		} else {
-			return nil
-		}
+		return gen.Start(testCtx, TXN_DELAY, TXN_COUNT)
 	})
 	eg.Go(func() error {
-		if err := stm.Subscribe(testCtx); err != nil {
-			if status.Code(err) == codes.Unknown && strings.Contains(err.Error(), "streamer has been stopped") {
-				return nil
-			} else {
-				return err
-			}
-		} else {
-			return nil
-		}
+		return prd.Stream.Subscribe(testCtx)
 	})
 	eg.Go(func() error {
-		return srv.Serve(lis)
+		return prd.Server.Serve(lis)
 	})
 
 	// NOTE: we can only establish a connection once the server has been started
@@ -120,7 +109,7 @@ func TestFlowBlockServices(t *testing.T) {
 	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	} else {
-		srv.GracefulStop()
+		prd.Server.GracefulStop()
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -130,14 +119,14 @@ func TestFlowBlockServices(t *testing.T) {
 		t.Fatal("consumer received no blocks")
 	}
 
-	latestBlock, err := backend.GetLatestBlock(ctx, true)
+	latestBlockNum, err := backend.Client().BlockNumber(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	consumerBlockNum := cursorsReceived[len(cursorsReceived)-1].Value
-	if consumerBlockNum != strconv.FormatUint(latestBlock.Height, 10) {
-		t.Fatalf("consumer did not receive the latest block (consumer = %s, latest = %d)", consumerBlockNum, latestBlock.Height)
+	if consumerBlockNum != strconv.FormatUint(latestBlockNum, 10) {
+		t.Fatalf("consumer did not receive the latest block (consumer = %s, latest = %d)", consumerBlockNum, latestBlockNum)
 	}
 
 	for i := range len(cursorsReceived) - 1 {
