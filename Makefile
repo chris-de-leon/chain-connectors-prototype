@@ -115,19 +115,20 @@ cli.plugins.install.all: build
 cli.plugins.run-from-config:
 	@go run ./src/cli/apps/cli/main.go \
 		plugins run from-config \
-		--config ./config.$(NETWORK).json \
-	  --name $(CHAIN)
+			--config ./config.$(NETWORK).json \
+			--name $(CHAIN)
 
 # make cli.plugins.run.from-cli CHAIN=flow WSS="access.devnet.nodes.onflow.org:9000"
 cli.plugins.run.from-cli:
 	@go run ./src/cli/apps/cli/main.go \
 		plugins run from-cli \
-		--plugin-id $(CHAIN) \
-		--chain-wss $(WSS)
+			--plugin-id $(CHAIN) \
+			--chain-wss $(WSS)
 
 cli.docker.local.run: release.local
 	@IMG="$$(jq -erc --arg arch "$$(go env GOARCH)" '.[] | select(.type | contains("Docker Image")) | select(.name | contains($$arch)) | .name' ./dist/artifacts.json)" && \
 	  docker run --rm -it --entrypoint /bin/bash "$$IMG"
 
+# docker run --rm --entrypoint /bin/bash "$DOCKERHUB_USERNAME/$(basename $(go list -m)):$(go run ./src/cli/apps/cli/main.go version --no-prefix)" -c "cc plugins install github --plugin-id flow && cc plugins run from-cli --plugin-id flow --chain-wss access.devnet.nodes.onflow.org:9000"
 cli.docker.hub.run:
 	@docker run --rm -it --entrypoint /bin/bash "$$DOCKERHUB_USERNAME/$$(basename $$(go list -m)):$$(go run ./src/cli/apps/cli/main.go version --no-prefix)"
