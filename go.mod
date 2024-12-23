@@ -1,4 +1,4 @@
-module github.com/chris-de-leon/chain-connectors
+module github.com/chris-de-leon/chain-connectors-prototype
 
 go 1.23
 

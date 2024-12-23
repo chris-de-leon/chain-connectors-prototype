@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/chris-de-leon/chain-connectors/proto/go/pb"
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/streamer"
+	"github.com/chris-de-leon/chain-connectors-prototype/proto/go/pb"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/streamer"
 	"google.golang.org/grpc"
 )
 

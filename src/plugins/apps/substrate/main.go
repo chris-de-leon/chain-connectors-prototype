@@ -10,10 +10,10 @@ import (
 	"syscall"
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/config"
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/api"
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor/substrate"
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/streamer"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/config"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/api"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor/substrate"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/streamer"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

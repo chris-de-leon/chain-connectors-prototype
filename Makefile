@@ -10,10 +10,10 @@ docker.compose.up:
 docker.compose.down:
 	@docker compose down --remove-orphans
 
-test.no-cache:
+test.no-cache: docker.compose.up
 	@go test -count=1 -v ./src/plugins/libs/...
 
-test:
+test: docker.compose.up
 	@go test -v ./src/plugins/libs/...
 
 protogen:
@@ -125,14 +125,9 @@ cli.plugins.run.from-cli:
 		--plugin-id $(CHAIN) \
 		--chain-wss $(WSS)
 
-cli.docker.build: release.local
-	@TAG="$$(jq -erc '.[] | select(.type | contains("Docker Image")) | .name | split(":")[1]' ./dist/artifacts.json)" && \
-		docker build \
-		  --build-arg TAG="$$TAG" \
-			--tag "cli:$$(go run ./src/cli/apps/cli/main.go version)" \
-			--file ./Dockerfile.cli \
-			.
+cli.docker.local.run: release.local
+	@IMG="$$(jq -erc --arg arch "$$(go env GOARCH)" '.[] | select(.type | contains("Docker Image")) | select(.name | contains($$arch)) | .name' ./dist/artifacts.json)" && \
+	  docker run --rm -it --entrypoint /bin/bash "$$IMG"
 
-cli.docker.run: cli.docker.build
-	@docker run --rm -it --entrypoint /bin/bash "cli:$$(go run ./src/cli/apps/cli/main.go version)"
-
+cli.docker.hub.run:
+	@docker run --rm -it --entrypoint /bin/bash "$$DOCKERHUB_USERNAME/$$(basename $$(go list -m)):$$(go run ./src/cli/apps/cli/main.go version --no-prefix)"

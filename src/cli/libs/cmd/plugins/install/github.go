@@ -3,10 +3,10 @@ package install
 import (
 	"context"
 
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/constants"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/gh"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/plgn"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/gh"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/plgn"
 	"github.com/urfave/cli/v3"
 )
 

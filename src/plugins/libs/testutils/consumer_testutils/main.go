@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/chris-de-leon/chain-connectors/proto/go/pb"
+	"github.com/chris-de-leon/chain-connectors-prototype/proto/go/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

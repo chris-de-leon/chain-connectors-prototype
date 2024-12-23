@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 	"github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow/protobuf/go/flow/executiondata"
 	"google.golang.org/grpc/codes"

@@ -8,7 +8,7 @@ import (
 	"os"
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 )
 
 type ChainCursor struct {

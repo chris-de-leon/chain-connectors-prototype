@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/cmd/common"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/cmd/plugins"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/cmd/common"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/cmd/plugins"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
 	"github.com/urfave/cli/v3"
 )
 

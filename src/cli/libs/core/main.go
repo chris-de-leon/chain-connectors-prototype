@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/constants"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/gh"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/gh"
 	"github.com/urfave/cli/v3"
 )
 

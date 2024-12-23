@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 )
 
 var ErrStreamerStopped = errors.New("streamer has been stopped")

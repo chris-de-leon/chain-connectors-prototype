@@ -1,8 +1,7 @@
-ARG TAG=latest
-FROM caffeineaddict333/chain-connectors:${TAG} AS binary
-
 FROM docker.io/debian:12.8-slim
-COPY --from=binary /cc /usr/local/bin/
+
+COPY /cc /usr/local/bin/
+
 RUN apt-get update -y \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends ca-certificates \

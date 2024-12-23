@@ -4,8 +4,8 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/core"
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/dirs"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/dirs"
 	"github.com/urfave/cli/v3"
 )
 

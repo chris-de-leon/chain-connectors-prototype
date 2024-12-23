@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 )

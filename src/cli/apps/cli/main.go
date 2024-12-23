@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/cmd"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/cmd"
 	"github.com/urfave/cli/v3"
 )
 

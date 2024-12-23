@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chris-de-leon/chain-connectors/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
 )
 
 const APP_DIR = "chain-connectors-prototype"

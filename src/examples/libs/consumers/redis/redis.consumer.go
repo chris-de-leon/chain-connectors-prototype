@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/proto/go/pb"
+	"github.com/chris-de-leon/chain-connectors-prototype/proto/go/pb"
 	"github.com/redis/go-redis/v9"
 )
 

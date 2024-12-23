@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors/src/plugins/libs/cursor"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 	"github.com/ethereum/go-ethereum"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )

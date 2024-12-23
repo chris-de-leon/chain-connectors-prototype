@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/chris-de-leon/chain-connectors/src/examples/libs/common"
-	"github.com/chris-de-leon/chain-connectors/src/examples/libs/consumers/redis"
-	"github.com/chris-de-leon/chain-connectors/proto/go/pb"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/examples/libs/common"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/examples/libs/consumers/redis"
+	"github.com/chris-de-leon/chain-connectors-prototype/proto/go/pb"
 	redisV9 "github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"

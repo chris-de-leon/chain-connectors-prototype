@@ -78,7 +78,7 @@ archives:
 
 dockers:
   - id: "cli-amd64"
-    dockerfile: "Dockerfile.goreleaser"
+    dockerfile: "Dockerfile"
     skip_push: "{{ .Env.SKIP_DOCKER }}"
     goarch: amd64
     use: buildx
@@ -93,7 +93,7 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
   - id: "cli-arm64"
-    dockerfile: "Dockerfile.goreleaser"
+    dockerfile: "Dockerfile"
     skip_push: "{{ .Env.SKIP_DOCKER }}"
     goarch: arm64
     use: buildx

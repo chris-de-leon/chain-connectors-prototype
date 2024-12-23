@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/chris-de-leon/chain-connectors/src/examples/libs/common"
-	"github.com/chris-de-leon/chain-connectors/proto/go/pb"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/examples/libs/common"
+	"github.com/chris-de-leon/chain-connectors-prototype/proto/go/pb"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
