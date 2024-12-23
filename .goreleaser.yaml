@@ -77,18 +77,44 @@ archives:
       - "eth-plugin"
 
 dockers:
-  - id: "cli"
+  - id: "cli-amd64"
     dockerfile: "Dockerfile.goreleaser"
     skip_push: "{{ .Env.SKIP_DOCKER }}"
+    goarch: amd64
+    use: buildx
     ids:
       - "cli"
     image_templates:
-      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}"
+      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}-amd64"
     build_flag_templates:
+      - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
+  - id: "cli-arm64"
+    dockerfile: "Dockerfile.goreleaser"
+    skip_push: "{{ .Env.SKIP_DOCKER }}"
+    goarch: arm64
+    use: buildx
+    ids:
+      - "cli"
+    image_templates:
+      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}-arm64"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+docker_manifests:
+  - id: "cli"
+    name_template: "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}"
+    skip_push: "{{ .Env.SKIP_DOCKER }}"
+    image_templates:
+      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}-arm64"
 
 release:
   skip_upload: "{{ .Env.SKIP_GITHUB }}"
