@@ -1,0 +1,29 @@
+{
+  "chains": {
+    "solana": {
+      "plugin": {
+        "id": "solana"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "rpc": "https://api.mainnet.solana.com",
+        "wss": "ws://api.mainet.solana.com"
+      }
+    },
+    "flow": {
+      "plugin": {
+        "id": "flow"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "wss": "access.mainnet.nodes.onflow.org:9000"
+      }
+    }
+  }
+}

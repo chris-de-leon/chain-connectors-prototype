@@ -1,0 +1,97 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: "cli"
+    main: "./src/cli/apps/cli/main.go"
+    binary: "cc"
+    goarch: [amd64, arm64]
+    goos: [linux, darwin]
+    env:
+      - CGO_ENABLED=0
+  - id: "substrate-plugin"
+    main: "./src/plugins/apps/substrate/main.go"
+    binary: "substrate"
+    goarch: [amd64, arm64]
+    goos: [linux, darwin]
+    env:
+      - CGO_ENABLED=0
+  - id: "solana-plugin"
+    main: "./src/plugins/apps/solana/main.go"
+    binary: "solana"
+    goarch: [amd64, arm64]
+    goos: [linux, darwin]
+    env:
+      - CGO_ENABLED=0
+  - id: "flow-plugin"
+    main: "./src/plugins/apps/flow/main.go"
+    binary: "flow"
+    goarch: [amd64, arm64]
+    goos: [linux, darwin]
+    env:
+      - CGO_ENABLED=0
+  - id: "eth-plugin"
+    main: "./src/plugins/apps/eth/main.go"
+    binary: "eth"
+    goarch: [amd64, arm64]
+    goos: [linux, darwin]
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - id: "cli"
+    name_template: "{{ .Env.CLI_ARCHIVE_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: "tar.gz"
+    builds:
+      - "cli"
+  - id: "substrate-plugin"
+    name_template: "{{ .Env.SUBSTRATE_PLUGIN_ARCHIVE_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: "tar.gz"
+    builds:
+      - "substrate-plugin"
+  - id: "solana-plugin"
+    name_template: "{{ .Env.SOLANA_PLUGIN_ARCHIVE_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: "tar.gz"
+    builds:
+      - "solana-plugin"
+  - id: "flow-plugin"
+    name_template: "{{ .Env.FLOW_PLUGIN_ARCHIVE_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: "tar.gz"
+    builds:
+      - "flow-plugin"
+  - id: "eth-plugin"
+    name_template: "{{ .Env.ETH_PLUGIN_ARCHIVE_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: "tar.gz"
+    builds:
+      - "eth-plugin"
+
+dockers:
+  - id: "cli"
+    dockerfile: "Dockerfile.goreleaser"
+    skip_push: "{{ .Env.SKIP_DOCKER }}"
+    ids:
+      - "cli"
+    image_templates:
+      - "{{ .Env.DOCKERHUB_USERNAME }}/{{ .ProjectName }}:{{ .Version }}"
+    build_flag_templates:
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+release:
+  skip_upload: "{{ .Env.SKIP_GITHUB }}"
+  disable: "{{ .Env.SKIP_GITHUB }}"
+  replace_existing_artifacts: true
+  mode: replace

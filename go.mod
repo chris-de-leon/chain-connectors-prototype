@@ -1,17 +1,21 @@
 module github.com/chris-de-leon/chain-connectors
 
-go 1.23.2
+go 1.23
+
+toolchain go1.23.2
 
 require (
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
 	github.com/ethereum/go-ethereum v1.14.12
 	github.com/gagliardetto/solana-go v1.12.0
-	github.com/onflow/flow-go-sdk v1.2.3
+	github.com/onflow/flow-go-sdk v1.3.0
+	github.com/onflow/flow/protobuf/go/flow v0.4.8
 	github.com/redis/go-redis/v9 v9.7.0
-	golang.org/x/net v0.31.0
-	golang.org/x/sync v0.9.0
-	google.golang.org/grpc v1.68.0
-	google.golang.org/protobuf v1.35.2
+	github.com/urfave/cli/v3 v3.0.0-beta1
+	golang.org/x/net v0.33.0
+	golang.org/x/sync v0.10.0
+	google.golang.org/grpc v1.69.2
+	google.golang.org/protobuf v1.36.0
 )
 
 require (
@@ -95,10 +99,9 @@ require (
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.8.0 // indirect
-	github.com/onflow/cadence v1.2.2 // indirect
+	github.com/onflow/atree v0.8.1 // indirect
+	github.com/onflow/cadence v1.3.0 // indirect
 	github.com/onflow/crypto v0.25.1 // indirect
-	github.com/onflow/flow/protobuf/go/flow v0.4.7 // indirect
 	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/sdks v0.6.0-preview.1 // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
@@ -114,7 +117,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/supranational/blst v0.3.13 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8b0eaed6c // indirect
@@ -125,22 +128,22 @@ require (
 	github.com/vedhavyas/go-subkey/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	github.com/zeebo/blake3 v0.2.3 // indirect
+	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.mongodb.org/mongo-driver v1.12.2 // indirect
-	go.opentelemetry.io/otel v1.24.0 // indirect
+	go.opentelemetry.io/otel v1.31.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/term v0.26.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gonum.org/v1/gonum v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241219192143-6b3ec007d9bb // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

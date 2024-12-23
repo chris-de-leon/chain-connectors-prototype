@@ -1,7 +1,7 @@
 # https://github.com/NixOS/nixpkgs/commits/master
 {
   inputs = {
-    nixpkgs.url = "https://github.com/NixOS/nixpkgs/archive/be77f97455fc7f17d3deabe790d7a7a1c3cdd899.tar.gz";
+    nixpkgs.url = "https://github.com/NixOS/nixpkgs/archive/4bbb73beb26f5152a87d3460e6bf76227841ae21.tar.gz";
     utils.url = "github:numtide/flake-utils";
   };
 
@@ -13,6 +13,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.grpc-tools
+            pkgs.goreleaser
             pkgs.go_1_23
             pkgs.nodejs
             pkgs.redis

@@ -1,0 +1,53 @@
+{
+  "chains": {
+    "moonbeam": {
+      "plugin": {
+        "id": "eth"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "wss": "wss://moonbeam.public.curie.radiumblock.co/ws"
+      }
+    },
+    "polkadot": {
+      "plugin": {
+        "id": "substrate"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "wss": "wss://westend-rpc.polkadot.io"
+      }
+    },
+    "solana": {
+      "plugin": {
+        "id": "solana"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "rpc": "https://api.testnet.solana.com",
+        "wss": "ws://api.testnet.solana.com"
+      }
+    },
+    "flow": {
+      "plugin": {
+        "id": "flow"
+      },
+      "server": {
+        "host": "localhost",
+        "port": 3000
+      },
+      "conn": {
+        "wss": "access.devnet.nodes.onflow.org:9000"
+      }
+    }
+  }
+}

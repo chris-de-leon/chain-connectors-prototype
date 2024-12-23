@@ -5,12 +5,14 @@ set -e
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-export PATH="$PATH:$(go env GOPATH)/bin"
+PATH="$PATH:$(go env GOPATH)/bin"
+
+mkdir -p ./proto/go/pb
 
 protoc \
-  --proto_path=./proto \
-  --go_out=./src/libs/proto \
+  --proto_path=./proto/spec \
+  --go_out=./proto/go/pb \
   --go_opt=paths=source_relative \
-  --go-grpc_out=./src/libs/proto \
+  --go-grpc_out=./proto/go/pb \
   --go-grpc_opt=paths=source_relative \
-  ./proto/*
+  ./proto/spec/*

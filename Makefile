@@ -1,42 +1,125 @@
-consumer.build:
-	go build -o ./bin/apps/consumers/$(CONSUMER)/bin ./src/apps/consumers/$(CONSUMER)/main.go
-
-producer.build:
-	go build -o ./bin/apps/producers/$(PRODUCER)/bin ./src/apps/producers/$(PRODUCER)/main.go
-
-consumer.run:
-	go run ./src/apps/consumers/$(CONSUMER)/main.go
-
-producer.run:
-	go run ./src/apps/producers/$(PRODUCER)/main.go
-
-docker.build.all:
-	bash ./scripts/build.docker.sh "$(CONCURRENCY)"
-
-docker.build.one:
-	docker build --build-arg APP_DIR=$(APP_DIR) --tag $(TAG) .
+SUBSTRATE_PLUGIN_ARCHIVE_NAME="substrate-plugin"
+SOLANA_PLUGIN_ARCHIVE_NAME="solana-plugin"
+FLOW_PLUGIN_ARCHIVE_NAME="flow-plugin"
+ETH_PLUGIN_ARCHIVE_NAME="eth-plugin"
+CLI_ARCHIVE_NAME="cli"
 
 docker.compose.up:
-	docker compose up --build -d
+	@docker compose up --build -d
 
 docker.compose.down:
-	docker compose down --remove-orphans
+	@docker compose down --remove-orphans
 
-build.all:
-	bash ./scripts/build.local.sh "$(CONCURRENCY)"
+test.no-cache:
+	@go test -count=1 -v ./src/plugins/libs/...
 
-test.all:
-	go test -v ./src/libs/...
+test:
+	@go test -v ./src/plugins/libs/...
 
 protogen:
-	bash ./scripts/protogen.sh
+	@bash ./scripts/protogen.sh
 
 install:
-	go get -v ./... && go mod tidy
+	@go get -v ./... && go mod tidy
 
 upgrade:
-	go get -v -u ./... && go mod tidy
+	@go get -v -u ./... && go mod tidy
 
 clean:
-	go clean -x -i -r -cache -modcache
+	@go clean -x -i -r -cache -modcache
+
+build:
+	@goreleaser build --snapshot --verbose --clean
+
+tag:
+	@git tag -f "$$(go run ./src/cli/apps/cli/main.go version)"
+
+release.github: tag
+	@\
+		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
+		SOLANA_PLUGIN_ARCHIVE_NAME="$(SOLANA_PLUGIN_ARCHIVE_NAME)" \
+		FLOW_PLUGIN_ARCHIVE_NAME="$(FLOW_PLUGIN_ARCHIVE_NAME)" \
+		ETH_PLUGIN_ARCHIVE_NAME="$(ETH_PLUGIN_ARCHIVE_NAME)" \
+		CLI_ARCHIVE_NAME="$(CLI_ARCHIVE_NAME)" \
+		SKIP_GITHUB="false" \
+		SKIP_DOCKER="true" \
+		goreleaser release \
+			--skip=validate,docker \
+			--verbose \
+			--clean
+
+release.docker: tag
+	@\
+		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
+		SOLANA_PLUGIN_ARCHIVE_NAME="$(SOLANA_PLUGIN_ARCHIVE_NAME)" \
+		FLOW_PLUGIN_ARCHIVE_NAME="$(FLOW_PLUGIN_ARCHIVE_NAME)" \
+		ETH_PLUGIN_ARCHIVE_NAME="$(ETH_PLUGIN_ARCHIVE_NAME)" \
+		CLI_ARCHIVE_NAME="$(CLI_ARCHIVE_NAME)" \
+		SKIP_GITHUB="true" \
+		SKIP_DOCKER="false" \
+		goreleaser release \
+			--skip=validate \
+			--verbose \
+			--clean
+
+release.local:
+	@\
+		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
+		SOLANA_PLUGIN_ARCHIVE_NAME="$(SOLANA_PLUGIN_ARCHIVE_NAME)" \
+		FLOW_PLUGIN_ARCHIVE_NAME="$(FLOW_PLUGIN_ARCHIVE_NAME)" \
+		ETH_PLUGIN_ARCHIVE_NAME="$(ETH_PLUGIN_ARCHIVE_NAME)" \
+		CLI_ARCHIVE_NAME="$(CLI_ARCHIVE_NAME)" \
+		SKIP_GITHUB="true" \
+		SKIP_DOCKER="true" \
+		goreleaser release \
+			--snapshot \
+			--verbose \
+			--clean
+
+release.all: tag
+	@\
+		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
+		SOLANA_PLUGIN_ARCHIVE_NAME="$(SOLANA_PLUGIN_ARCHIVE_NAME)" \
+		FLOW_PLUGIN_ARCHIVE_NAME="$(FLOW_PLUGIN_ARCHIVE_NAME)" \
+		ETH_PLUGIN_ARCHIVE_NAME="$(ETH_PLUGIN_ARCHIVE_NAME)" \
+		CLI_ARCHIVE_NAME="$(CLI_ARCHIVE_NAME)" \
+		SKIP_GITHUB="false" \
+		SKIP_DOCKER="false" \
+		goreleaser release \
+			--skip=validate \
+			--verbose \
+			--clean
+
+cli.plugins.install.all: build
+	@go run ./src/cli/apps/cli/main.go clean -a -f
+	@go run ./src/cli/apps/cli/main.go plugins install local \
+	  --plugin-path="$$(jq -erc --arg chain "substrate" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
+	  --plugin-path="$$(jq -erc --arg chain "solana" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
+	  --plugin-path="$$(jq -erc --arg chain "flow" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
+	  --plugin-path="$$(jq -erc --arg chain "eth" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)"
+
+# make cli.plugins.run.from-config CHAIN=flow NETWORK=testnet
+cli.plugins.run-from-config:
+	@go run ./src/cli/apps/cli/main.go \
+		plugins run from-config \
+		--config ./config.$(NETWORK).json \
+	  --name $(CHAIN)
+
+# make cli.plugins.run.from-cli CHAIN=flow WSS="access.devnet.nodes.onflow.org:9000"
+cli.plugins.run.from-cli:
+	@go run ./src/cli/apps/cli/main.go \
+		plugins run from-cli \
+		--plugin-id $(CHAIN) \
+		--chain-wss $(WSS)
+
+cli.docker.build: release.local
+	@TAG="$$(jq -erc '.[] | select(.type | contains("Docker Image")) | .name | split(":")[1]' ./dist/artifacts.json)" && \
+		docker build \
+		  --build-arg TAG="$$TAG" \
+			--tag "cli:$$(go run ./src/cli/apps/cli/main.go version)" \
+			--file ./Dockerfile.cli \
+			.
+
+cli.docker.run: cli.docker.build
+	@docker run --rm -it --entrypoint /bin/bash "cli:$$(go run ./src/cli/apps/cli/main.go version)"
 
