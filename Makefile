@@ -3,6 +3,7 @@ SOLANA_PLUGIN_ARCHIVE_NAME="solana-plugin"
 FLOW_PLUGIN_ARCHIVE_NAME="flow-plugin"
 ETH_PLUGIN_ARCHIVE_NAME="eth-plugin"
 CLI_ARCHIVE_NAME="cli"
+SHELL = /bin/bash -e
 
 docker.compose.up:
 	@docker compose up --build -d
@@ -27,6 +28,7 @@ upgrade:
 
 clean:
 	@go clean -x -i -r -cache -modcache
+	@rm -rf ./dist
 
 build:
 	@goreleaser build --snapshot --verbose --clean
