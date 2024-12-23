@@ -76,6 +76,19 @@ release.local:
 			--verbose \
 			--clean
 
+release.all.strict: tag
+	@\
+		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
+		SOLANA_PLUGIN_ARCHIVE_NAME="$(SOLANA_PLUGIN_ARCHIVE_NAME)" \
+		FLOW_PLUGIN_ARCHIVE_NAME="$(FLOW_PLUGIN_ARCHIVE_NAME)" \
+		ETH_PLUGIN_ARCHIVE_NAME="$(ETH_PLUGIN_ARCHIVE_NAME)" \
+		CLI_ARCHIVE_NAME="$(CLI_ARCHIVE_NAME)" \
+		SKIP_GITHUB="false" \
+		SKIP_DOCKER="false" \
+		goreleaser release \
+			--verbose \
+			--clean
+
 release.all: tag
 	@\
 		SUBSTRATE_PLUGIN_ARCHIVE_NAME="$(SUBSTRATE_PLUGIN_ARCHIVE_NAME)" \
@@ -86,7 +99,7 @@ release.all: tag
 		SKIP_GITHUB="false" \
 		SKIP_DOCKER="false" \
 		goreleaser release \
-			--skip=validate \
+		  --skip=validate \
 			--verbose \
 			--clean
 
