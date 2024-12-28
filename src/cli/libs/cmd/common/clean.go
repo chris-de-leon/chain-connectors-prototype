@@ -30,13 +30,10 @@ var clean = &cli.Command{
 		}
 
 		if config {
-			configDir, err := dirs.GetAppConfigDir()
-			if err != nil {
-				return core.ErrExit(err)
-			}
+			configDir := dirs.Config
 
 			if all {
-				configDir = filepath.Dir(configDir)
+				configDir = filepath.Dir(dirs.Config)
 			}
 
 			if err := core.CleanDir(c, configDir, force); err != nil {
@@ -45,10 +42,7 @@ var clean = &cli.Command{
 		}
 
 		if cache {
-			cacheDir, err := dirs.GetAppCacheDir()
-			if err != nil {
-				return core.ErrExit(err)
-			}
+			cacheDir := dirs.Cache
 
 			if all {
 				cacheDir = filepath.Dir(cacheDir)

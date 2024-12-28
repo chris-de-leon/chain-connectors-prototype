@@ -5,14 +5,21 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/gh"
 	"github.com/urfave/cli/v3"
 )
 
 const FileModeExecutable = 0755
 
-var Repo = gh.NewRepository(constants.OWNER, constants.REPO)
+var GithubClient = gh.NewClient(gh.NewRepository("chris-de-leon", "chain-connectors-prototype"))
+
+func VersionWithoutPrefix() string {
+	return "1.1.0"
+}
+
+func VersionWithPrefix() string {
+	return fmt.Sprintf("v%s", VersionWithoutPrefix())
+}
 
 func PrintResults(cmd *cli.Command, results []string) error {
 	output, err := json.MarshalIndent(map[string][]string{"Result": results}, "", " ")

@@ -4,43 +4,82 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
 )
 
-const APP_DIR = "chain-connectors-prototype"
+const (
+	APPLICATION_DIR = "chain-connectors-prototype"
+	PLUGINS_DIR     = "plugins"
+)
 
-func GetAppConfigDir() (string, error) {
+var (
+	PluginsConfig string
+	PluginsCache  string
+	Config        string
+	Cache         string
+)
+
+func init() {
+	var dir string
+	var err error
+
+	if dir, err = getConfigDir(); err != nil {
+		panic(err)
+	} else {
+		Config = dir
+	}
+
+	if dir, err = getCacheDir(); err != nil {
+		panic(err)
+	} else {
+		Cache = dir
+	}
+
+	if dir, err = getPluginsConfigDir(); err != nil {
+		panic(err)
+	} else {
+		PluginsConfig = dir
+	}
+
+	if dir, err = getPluginsCacheDir(); err != nil {
+		panic(err)
+	} else {
+		PluginsCache = dir
+	}
+}
+
+func getConfigDir() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	} else {
-		return filepath.Join(dir, APP_DIR, constants.VersionWithPrefix()), nil
+		return filepath.Join(dir, APPLICATION_DIR, core.VersionWithPrefix()), nil
 	}
 }
 
-func GetAppCacheDir() (string, error) {
+func getCacheDir() (string, error) {
 	dir, err := os.UserCacheDir()
 	if err != nil {
 		return "", err
 	} else {
-		return filepath.Join(dir, APP_DIR, constants.VersionWithPrefix()), nil
+		return filepath.Join(dir, APPLICATION_DIR, core.VersionWithPrefix()), nil
 	}
 }
 
-func GetAppGithubDir() (string, error) {
-	dir, err := GetAppCacheDir()
+func getPluginsConfigDir() (string, error) {
+	dir, err := getConfigDir()
 	if err != nil {
 		return "", err
 	} else {
-		return filepath.Join(dir, "github"), nil
+		return filepath.Join(dir, PLUGINS_DIR), nil
 	}
 }
 
-func GetAppPluginsDir() (string, error) {
-	dir, err := GetAppConfigDir()
+func getPluginsCacheDir() (string, error) {
+	dir, err := getCacheDir()
 	if err != nil {
 		return "", err
 	} else {
-		return filepath.Join(dir, "plugins"), nil
+		return filepath.Join(dir, PLUGINS_DIR), nil
 	}
 }

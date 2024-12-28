@@ -27,7 +27,7 @@ var Commands = &cli.Command{
 		}
 
 		for _, pluginID := range pluginIDs {
-			if err := plgn.Remove(pluginID); err != nil {
+			if err := plgn.Store.Remove(pluginID); err != nil {
 				return core.ErrExit(err)
 			}
 		}

@@ -2,15 +2,12 @@ package streamer
 
 import (
 	"context"
-	"errors"
 	"log"
 	"math/big"
 	"sync"
 
 	"github.com/chris-de-leon/chain-connectors-prototype/src/plugins/libs/cursor"
 )
-
-var ErrStreamerStopped = errors.New("streamer has been stopped")
 
 type Streamer struct {
 	logger    *log.Logger

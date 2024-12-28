@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
+	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
 	"github.com/urfave/cli/v3"
 )
 
@@ -16,9 +16,9 @@ var version = &cli.Command{
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
 		if c.Bool("no-prefix") {
-			fmt.Fprintln(c.Root().Writer, constants.VersionWithoutPrefix())
+			fmt.Fprintln(c.Root().Writer, core.VersionWithoutPrefix())
 		} else {
-			fmt.Fprintln(c.Root().Writer, constants.VersionWithPrefix())
+			fmt.Fprintln(c.Root().Writer, core.VersionWithPrefix())
 		}
 		return nil
 	},

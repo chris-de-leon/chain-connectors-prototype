@@ -105,16 +105,19 @@ release.all: tag
 			--verbose \
 			--clean
 
-cli.plugins.install.all: build
+cli.clean.all:
 	@go run ./src/cli/apps/cli/main.go clean -a -f
+
+cli.plugins.install.all: build
 	@go run ./src/cli/apps/cli/main.go plugins install local \
 	  --plugin-path="$$(jq -erc --arg chain "substrate" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
 	  --plugin-path="$$(jq -erc --arg chain "solana" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
 	  --plugin-path="$$(jq -erc --arg chain "flow" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
-	  --plugin-path="$$(jq -erc --arg chain "eth" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)"
+	  --plugin-path="$$(jq -erc --arg chain "eth" --arg os "$$(go env GOOS)" --arg arch "$$(go env GOARCH)" '.[] | select(.path | contains($$chain + "-plugin_" + $$os + "_" + $$arch)) | .path' ./dist/artifacts.json)" \
+	  --clean
 
 # make cli.plugins.run.from-config CHAIN=flow NETWORK=testnet
-cli.plugins.run-from-config:
+cli.plugins.run.from-config:
 	@go run ./src/cli/apps/cli/main.go \
 		plugins run from-config \
 			--config ./config.$(NETWORK).json \
@@ -131,6 +134,6 @@ cli.docker.local.run: release.local
 	@IMG="$$(jq -erc --arg arch "$$(go env GOARCH)" '.[] | select(.type | contains("Docker Image")) | select(.name | contains($$arch)) | .name' ./dist/artifacts.json)" && \
 	  docker run --rm -it --entrypoint /bin/bash "$$IMG"
 
-# docker run --rm --entrypoint /bin/bash "$DOCKERHUB_USERNAME/$(basename $(go list -m)):$(go run ./src/cli/apps/cli/main.go version --no-prefix)" -c "cc plugins install github --plugin-id flow && cc plugins run from-cli --plugin-id flow --chain-wss access.devnet.nodes.onflow.org:9000"
+# docker run --rm --entrypoint /bin/bash "$DOCKERHUB_USERNAME/$(basename $(go list -m)):$(go run ./src/cli/apps/cli/main.go version --no-prefix)" -c "cc plugins run from-cli --plugin-id flow --chain-wss access.devnet.nodes.onflow.org:9000"
 cli.docker.hub.run:
 	@docker run --rm -it --entrypoint /bin/bash "$$DOCKERHUB_USERNAME/$$(basename $$(go list -m)):$$(go run ./src/cli/apps/cli/main.go version --no-prefix)"

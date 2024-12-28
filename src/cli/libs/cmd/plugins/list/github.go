@@ -3,9 +3,7 @@ package list
 import (
 	"context"
 
-	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/constants"
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
-	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/gh"
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/plgn"
 	"github.com/urfave/cli/v3"
 )
@@ -14,7 +12,7 @@ var github = &cli.Command{
 	Name:  "github",
 	Usage: "Lists all plugins that can be downloaded from Github",
 	Action: func(ctx context.Context, c *cli.Command) error {
-		release, err := gh.NewClient(core.Repo).GetReleaseByTag(ctx, constants.VersionWithPrefix())
+		release, err := core.GithubClient.GetReleaseByTag(ctx, core.VersionWithPrefix())
 		if err != nil {
 			return core.ErrExit(err)
 		}

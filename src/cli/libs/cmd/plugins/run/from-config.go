@@ -2,8 +2,6 @@ package run
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/config"
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/core"
@@ -22,21 +20,28 @@ var fromConfig = &cli.Command{
 		configPath := c.String("config")
 		chainName := c.String("name")
 
-		cliConfig, err := config.Parse(configPath)
+		chainConfig, err := config.ParseChainConfig(configPath, chainName)
 		if err != nil {
 			return core.ErrExit(err)
 		}
 
-		chainConfig, exists := cliConfig.Chains[chainName]
-		if !exists {
-			return fmt.Errorf(
-				"chain with name '%s' does not exist in CLI config - must be one of: [ %s ]",
-				chainName,
-				strings.Join(cliConfig.ChainNames(), ", "),
-			)
+		isInstalled, err := plgn.Store.IsInstalled(chainConfig.Plugin.ID)
+		if err != nil {
+			return core.ErrExit(err)
 		}
 
-		if err := plgn.Exec(ctx, &chainConfig); err != nil {
+		if !isInstalled {
+			pluginPaths, err := plgn.Cache.Download(ctx, chainConfig.Plugin.ID)
+			if err != nil {
+				return core.ErrExit(err)
+			}
+
+			if err := plgn.Store.Install(pluginPaths); err != nil {
+				return core.ErrExit(err)
+			}
+		}
+
+		if err := plgn.Store.Exec(ctx, chainConfig); err != nil {
 			return core.ErrExit(err)
 		} else {
 			return nil

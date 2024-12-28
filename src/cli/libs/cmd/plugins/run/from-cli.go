@@ -20,21 +20,39 @@ var fromCLI = &cli.Command{
 		&cli.StringFlag{Name: "chain-rpc", Usage: "The chain RPC URL", Sources: cli.EnvVars("CHAIN_RPC_URL"), Required: false},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
-		if err := plgn.Exec(ctx,
-			&config.ChainConfig{
-				Plugin: &config.PluginConfig{
-					ID: c.String("plugin-id"),
-				},
-				Server: &config.ServerConfig{
-					Host: c.String("server-host"),
-					Port: c.Int("server-port"),
-				},
-				Conn: &config.ConnectionConfg{
-					Wss: c.String("chain-wss"),
-					Rpc: c.String("chain-rpc"),
-				},
+		pluginID := c.String("plugin-id")
+
+		conf := &config.ChainConfig{
+			Plugin: &config.PluginConfig{
+				ID: pluginID,
 			},
-		); err != nil {
+			Server: &config.ServerConfig{
+				Host: c.String("server-host"),
+				Port: c.Int("server-port"),
+			},
+			Conn: &config.ConnectionConfg{
+				Wss: c.String("chain-wss"),
+				Rpc: c.String("chain-rpc"),
+			},
+		}
+
+		isInstalled, err := plgn.Store.IsInstalled(pluginID)
+		if err != nil {
+			return core.ErrExit(err)
+		}
+
+		if !isInstalled {
+			pluginPaths, err := plgn.Cache.Download(ctx, pluginID)
+			if err != nil {
+				return core.ErrExit(err)
+			}
+
+			if err := plgn.Store.Install(pluginPaths); err != nil {
+				return core.ErrExit(err)
+			}
+		}
+
+		if err := plgn.Store.Exec(ctx, conf); err != nil {
 			return core.ErrExit(err)
 		} else {
 			return nil
