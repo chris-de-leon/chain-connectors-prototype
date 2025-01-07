@@ -20,6 +20,16 @@ test: docker.compose.up
 protogen:
 	@bash ./scripts/protogen.sh
 
+setup:
+	@NIXPKGS_ALLOW_UNFREE=1 \
+		nix \
+			--extra-experimental-features 'flakes' \
+			--extra-experimental-features 'nix-command' \
+		develop \
+			--show-trace \
+			--impure \
+		"./nix"
+
 install:
 	@go get -v ./... && go mod tidy
 

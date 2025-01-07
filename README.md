@@ -54,7 +54,7 @@ docker run caffeineaddict333/chain-connectors-prototype:1.1.0 plugins run from-c
 Enter a Nix shell with all necessary dev tools available:
 
 ```sh
-bash ./setup.sh
+make setup
 ```
 
 Install dependencies:
