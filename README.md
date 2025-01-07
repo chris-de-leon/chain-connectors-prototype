@@ -10,8 +10,8 @@ The chain connectors project is a suite of web3 tooling that offers a standardiz
 
 Each chain family has its own plugin which can be run using the chain connectors CLI tool. Under the hood, a chain family's plugin will:
 
-1. start a background process that subscribes to new blocks on the chain via a websocket connection
-1. start a gRPC server that allows clients to subscribe to the block data and interact with it in real-time
+1. Start a background process that subscribes to new blocks on the chain via a websocket connection
+1. Start a gRPC server that allows clients to subscribe to the block data and interact with it in real-time
 
 ## Usage
 
