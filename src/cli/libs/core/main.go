@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
+	embeds "github.com/chris-de-leon/chain-connectors-prototype"
 	"github.com/chris-de-leon/chain-connectors-prototype/src/cli/libs/gh"
 	"github.com/urfave/cli/v3"
 )
@@ -14,7 +16,7 @@ const FileModeExecutable = 0755
 var GithubClient = gh.NewClient(gh.NewRepository("chris-de-leon", "chain-connectors-prototype"))
 
 func VersionWithoutPrefix() string {
-	return "1.1.0"
+	return strings.ReplaceAll(embeds.Version, "\n", "")
 }
 
 func VersionWithPrefix() string {
