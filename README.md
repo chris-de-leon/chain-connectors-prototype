@@ -1,5 +1,9 @@
 # Chain Connectors Prototype
 
+## Archive Notice
+
+I have decided to pause development on this project until further notice as I no longer have time to maintain it and add new features.
+
 ## Intro
 
 The chain connectors project is a suite of web3 tooling that offers a standardized way to access real-time block data from a wide range of blockchains. The project currently supports the following chain families:
